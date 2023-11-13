@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Amigo Oculto Machado-Carvalho</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <nav
+      class="navbar bg-dark border-bottom border-body shadow p-3 mb-5"
+      data-bs-theme="dark"
+    >
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">
+          <img
+            src="/docs/5.3/assets/brand/bootstrap-logo.svg"
+            alt="Machado"
+            width="30"
+            height="24"
+            class="d-inline-block align-text-top"
+          />
+        </a>
+      </div>
+    </nav>
+    <div class="container text-center">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="table-responsive">
+            <table
+              id="lista-pessoas"
+              class="table table-light table-striped table-hover"
+            >
+              <thead>
+                <tr class="table-dark">
+                  <th scope="col">#</th>
+                  <th scope="col">Nome</th>
+                  <th scope="col">Telefone</th>
+                  <th scope="col">Ações</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="d-grid gap-2 col-6 mx-auto">
+            <button
+              id="in-user"
+              class="btn btn-success"
+              type="button"
+              data-bs-toggle="modal"
+              data-bs-target="#staticBackdrop"
+            >
+              Adicionar
+            </button>
+            <button class="btn btn-dark" type="button">Restrições</button>
+            <button class="btn btn-info" type="button">Sortear</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div
+      class="modal fade"
+      id="staticBackdrop"
+      data-bs-backdrop="static"
+      data-bs-keyboard="true"
+      tabindex="-1"
+      aria-labelledby="staticBackdropLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="staticBackdropLabel">
+              Adicionar Usuário
+            </h1>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="formUser">
+              <div class="mb-3">
+                <input
+                  type="number"
+                  class="form-control"
+                  id="idHidden"
+                  hidden
+                />
+              </div>
+              <div class="mb-3">
+                <label for="inNome" class="form-label">Nome</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="inNome"
+                  aria-describedby="nomeHelp"
+                  required
+                />
+                <div id="nomeHelp" class="form-text">
+                  Digitar o nome da pessoa.
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="inTelefone" class="form-label">Telefone</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="inTelefone"
+                  aria-describedby="foneHelp"
+                  required
+                />
+                <div id="foneHelp" class="form-text">
+                  Digitar o telefone da pessoa.
+                </div>
+              </div>
+            </form>
+          </div>
+          <p id="mensagem" class="text-danger p-3"></p>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Fechar
+            </button>
+            <button id="btnsalvar" type="button" class="btn btn-primary">
+              Salvar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="js/util.js"></script>
+    <script src="js/get-users.js"></script>
+    <script src="js/post-users.js"></script>
+    <script src="js/delete-user.js"></script>
+    <script src="js/edit-user.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+      integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"
+      integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>
