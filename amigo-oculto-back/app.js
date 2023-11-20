@@ -1,10 +1,12 @@
 const express = require("express");
+const cors = require("cors");
 
 const PORT = 3000;
 
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
 lista_pessoas = [
   {
@@ -31,7 +33,9 @@ lista_pessoas = [
 
 let proxId = lista_pessoas.length + 1;
 
-app.get("/", (req, res) => {});
+app.get("/", (req, res) => {
+  res.json(lista_pessoas);
+});
 
 app.post("/", (req, res) => {});
 
