@@ -52,7 +52,20 @@ app.post("/", (req, res) => {
   res.status(201).json({});
 });
 
-app.delete("/:id", (req, res) => {});
+app.delete("/:id", (req, res) => {
+  const parametros = req.params;
+  const id = parametros.id;
+
+  const result = lista_pessoas.filter((pessoa) => pessoa.id === id);
+  console.log(result);
+  if (result) {
+    lista_pessoas = lista_pessoas.filter((pessoa) => pessoa.id !== id);
+    console.log(lista_pessoas);
+    res.status(204).end();
+  } else {
+    res.status(400).json({ mensagem: "Não encontrado!" });
+  }
+});
 
 app.put("/:id", (req, res) => {});
 
