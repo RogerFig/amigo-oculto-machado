@@ -37,7 +37,20 @@ app.get("/", (req, res) => {
   res.json(lista_pessoas);
 });
 
-app.post("/", (req, res) => {});
+app.post("/", (req, res) => {
+  const pessoa = req.body;
+
+  const dados = {
+    id: `${proxId}`,
+    nome: pessoa.nome,
+    telefone: pessoa.telefone,
+  };
+
+  lista_pessoas.push(dados);
+  proxId++;
+
+  res.status(201).json({});
+});
 
 app.delete("/:id", (req, res) => {});
 
