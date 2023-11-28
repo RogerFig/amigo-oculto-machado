@@ -13,8 +13,12 @@ function preencheTabela(pessoas) {
     const pessoaHTML = `
     <tr>
     <th scope="row">${pessoa.id}</th>
-    <td>${pessoa.nome}</td>
-    <td>${pessoa.telefone}</td>
+    <td>${pessoa.nome_completo}</td>
+    <td>${pessoa.nick}</td>
+    <td>${pessoa.escolheu}</td>
+    <td>${pessoa.escolhido}</td>
+    <td>${pessoa.data}</td>
+    <td>${pessoa.hash}</td>
     <td>
     <i class="fas fa-edit fa-lg botao-editar" style="margin-right:4px" id="btnEdt_${pessoa.id}" data-bs-toggle="modal"
     data-bs-target="#staticBackdrop"></i>

@@ -9,11 +9,12 @@ tabela.addEventListener("click", async (e) => {
     const formUser = document.querySelector("#formUser");
 
     const pessoa = await getPessoa(id);
-
-    formUser.idHidden.value = id;
-    formUser.inNome.value = pessoa[0].nome;
-    formUser.inTelefone.value = pessoa[0].telefone;
-    console.log(formUser.idHidden.value);
+    console.log(pessoa[0].id);
+    formUser.idHidden.value = pessoa[0].id;
+    formUser.inNome.value = pessoa[0].nome_completo;
+    formUser.inNick.value = pessoa[0].nick;
+    formUser.checkEscolheu.checked = pessoa[0].escolheu;
+    formUser.checkEscolhido.checked = pessoa[0].escolhido;
 
     const titulo = document.querySelector("#staticBackdropLabel");
     titulo.innerText = "Editar Usuário";

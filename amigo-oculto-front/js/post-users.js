@@ -11,21 +11,36 @@ botaoSalvar.addEventListener("click", (e) => {
   }
   const idHidden = formUser.idHidden.value;
   const inNome = formUser.inNome.value;
-  const inTelefone = formUser.inTelefone.value;
+  const inNick = formUser.inNick.value;
+  const escolheu = formUser.checkEscolheu.checked;
+  const escolhido = formUser.checkEscolhido.checked;
 
   if (idHidden) {
-    user = { id: idHidden, nome: inNome, telefone: inTelefone };
+    user = {
+      id: idHidden,
+      nome_completo: inNome,
+      nick: inNick,
+      escolheu: escolheu,
+      escolhido: escolhido,
+    };
     editarUser(user);
     const titulo = document.querySelector("#staticBackdropLabel");
     titulo.innerText = "Adicionar Usuário";
   } else {
-    user = { nome: inNome, telefone: inTelefone };
+    user = {
+      nome_completo: inNome,
+      nick: inNick,
+      escolheu: escolheu,
+      escolhido: escolhido,
+    };
     enviaPost(user);
   }
 
   formUser.inNome.value = "";
-  formUser.inTelefone.value = "";
+  formUser.inNick.value = "";
   formUser.idHidden.value = "";
+  formUser.checkEscolheu.checked = false;
+  formUser.checkEscolhido.checked = false;
   document.querySelector("#mensagem").innerText = "";
 });
 

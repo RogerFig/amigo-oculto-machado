@@ -1,10 +1,11 @@
 const express = require("express");
 const rotas = require("./api");
 const { sequelize } = require("./models");
+require("dotenv").config();
 
 const cors = require("cors");
 
-const PORT = 3000;
+const PORT = process.env.PORT;
 
 const app = express();
 

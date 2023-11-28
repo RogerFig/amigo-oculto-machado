@@ -21,9 +21,9 @@
       data-bs-theme="dark"
     >
       <div class="container-fluid">
-        <a class="navbar-brand" href="#">
+        <a class="navbar-brand" href="index.html">
           <img
-            src="/docs/5.3/assets/brand/bootstrap-logo.svg"
+            src="images/icone-app-amigo-oculto.png"
             alt="Machado"
             width="30"
             height="24"
@@ -34,7 +34,7 @@
     </nav>
     <div class="container text-center">
       <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-9">
           <div class="table-responsive">
             <table
               id="lista-pessoas"
@@ -44,7 +44,11 @@
                 <tr class="table-dark">
                   <th scope="col">#</th>
                   <th scope="col">Nome</th>
-                  <th scope="col">Telefone</th>
+                  <th scope="col">Nick</th>
+                  <th scope="col">Escolheu</th>
+                  <th scope="col">Escolhido</th>
+                  <th scope="col">Data</th>
+                  <th scope="col">Hash</th>
                   <th scope="col">Ações</th>
                 </tr>
               </thead>
@@ -63,8 +67,13 @@
             >
               Adicionar
             </button>
-            <button class="btn btn-dark" type="button">Restrições</button>
+            <button id="btnRestricoes" class="btn btn-dark" type="button">
+              Restrições
+            </button>
             <button class="btn btn-info" type="button">Sortear</button>
+            <button id="btnReset" class="btn btn-danger" type="button">
+              Reset
+            </button>
           </div>
         </div>
       </div>
@@ -95,38 +104,62 @@
           </div>
           <div class="modal-body">
             <form id="formUser">
-              <div class="mb-3">
+              <div class="row g-3">
                 <input
                   type="number"
                   class="form-control"
                   id="idHidden"
                   hidden
                 />
-              </div>
-              <div class="mb-3">
-                <label for="inNome" class="form-label">Nome</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="inNome"
-                  aria-describedby="nomeHelp"
-                  required
-                />
-                <div id="nomeHelp" class="form-text">
-                  Digitar o nome da pessoa.
+                <div class="col-sm-6">
+                  <label for="inNome" class="form-label">Nome</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="inNome"
+                    aria-describedby="nomeHelp"
+                    required
+                  />
+                  <div id="nomeHelp" class="form-text">
+                    Digitar o nome da pessoa.
+                  </div>
                 </div>
-              </div>
-              <div class="mb-3">
-                <label for="inTelefone" class="form-label">Telefone</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="inTelefone"
-                  aria-describedby="foneHelp"
-                  required
-                />
-                <div id="foneHelp" class="form-text">
-                  Digitar o telefone da pessoa.
+                <div class="col-sm-6">
+                  <label for="inNick" class="form-label">Nick</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="inNick"
+                    aria-describedby="nickHelp"
+                    required
+                  />
+                  <div id="nickHelp" class="form-text">
+                    Digitar o nick da pessoa.
+                  </div>
+                </div>
+                <div class="col-sm-3">
+                  <div class="form-check">
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      id="checkEscolheu"
+                    />
+                    <label class="form-check-label" for="checkEscolheu"
+                      >Escolheu?</label
+                    >
+                  </div>
+                </div>
+                <div class="col-sm-3">
+                  <div class="form-check">
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      id="checkEscolhido"
+                    />
+                    <label class="form-check-label" for="checkEscolhido"
+                      >Escolhido?</label
+                    >
+                  </div>
                 </div>
               </div>
             </form>
