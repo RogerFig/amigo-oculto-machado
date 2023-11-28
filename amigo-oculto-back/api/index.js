@@ -1,80 +1,208 @@
 const express = require("express");
-
 const router = express.Router();
+const { Pessoa, Par, Restricao, sequelize } = require("../models");
+const crypto = require("crypto");
+const { Op } = require("sequelize");
 
-lista_pessoas = [
-  {
-    id: "1",
-    nome: "Maria José",
-    telefone: "86999885544",
-  },
-  {
-    id: "2",
-    nome: "José Maria",
-    telefone: "86999885544",
-  },
-  {
-    id: "3",
-    nome: "Marta Maria",
-    telefone: "86999885544",
-  },
-  {
-    id: "4",
-    nome: "João Maria",
-    telefone: "86999885544",
-  },
-];
-
-let proxId = lista_pessoas.length + 1;
-
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
   const { id } = req.query;
-  console.log(req.query);
+
   const results = id
-    ? lista_pessoas.filter((user) => user.id === id)
-    : lista_pessoas;
-  // console.log(results);
+    ? await Pessoa.findAll({
+        where: {
+          id: id,
+        },
+      })
+    : await Pessoa.findAll();
+
   return res.json(results);
 });
 
-router.post("/", (req, res) => {
-  const dados = req.body;
-  const novoUser = {
-    id: `${proxId}`,
-    nome: dados.nome,
-    telefone: dados.telefone,
-  };
-  lista_pessoas.push(novoUser);
-  proxId++;
+router.post("/", async (req, res) => {
+  const { nome_completo, nick, escolheu, escolhido } = req.body;
+
+  const max_id = await Pessoa.max("id", { where: {} });
+  const hashfull = crypto.createHash("md5").update(nome_completo).digest("hex");
+
+  const novaPessoa = await Pessoa.create({
+    id: max_id + 1,
+    nome_completo,
+    nick,
+    escolheu,
+    escolhido,
+    hash: hashfull.substring(0, 8),
+  });
+
   res.status(201).json({ mensagem: "Usuário inserido com sucesso" });
 });
 
-router.delete("/:id", (req, res) => {
+router.delete("/:id", async (req, res) => {
   const { id } = req.params;
-  result = lista_pessoas.filter((pessoa) => pessoa.id === id);
-  if (result) {
-    lista_pessoas = lista_pessoas.filter((pessoa) => pessoa.id !== id);
-    res.status(204).end();
-  } else {
-    res.status(400).json({ mensagem: "Não encontrado." });
-  }
-  // console.log(lista_pessoas);
+
+  await Pessoa.destroy({
+    where: {
+      id: id,
+    },
+  });
+
+  res.status(204).end();
 });
 
-router.put("/:id", (req, res) => {
+router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const pessoa = req.body;
-  console.log(`Recebi a edição do id ${id}`);
+  const { nome_completo, nick, escolheu, escolhido } = req.body;
 
-  lista_pessoas.forEach((element) => {
-    if (element.id === id) {
-      element.nome = pessoa.nome;
-      element.telefone = pessoa.telefone;
-      return;
+  await Pessoa.update(
+    { nome_completo, nick, escolheu, escolhido },
+    {
+      where: {
+        id: id,
+      },
     }
-  });
-  console.log(lista_pessoas);
+  );
+
   res.status(200).json({ mensagem: "Usuário editado com sucesso!" });
+});
+
+// Método de RESET
+router.put("/", async (req, res) => {
+  await Pessoa.update(
+    {
+      escolhido: false,
+      escolheu: false,
+      data: null,
+    },
+    {
+      where: {},
+    }
+  );
+
+  await Par.destroy({
+    truncate: true,
+  });
+
+  res.status(200).json({ mensagem: "Base resetada com sucesso!" });
+});
+
+// Rotas de restrições
+router.get("/restricao", async (req, res) => {
+  const restricoes = await Restricao.findAll({
+    attributes: ["id_retira", "id_escolhido"],
+    where: {},
+  });
+  res.json(restricoes);
+});
+
+router.post("/restricao", async (req, res) => {
+  const restricoes = req.body;
+  console.log(restricoes);
+
+  const t = await sequelize.transaction();
+
+  try {
+    await Restricao.destroy(
+      {
+        where: {
+          id_retira: restricoes[0].id_retira,
+        },
+      },
+      { transaction: t }
+    );
+
+    for (const restricao of restricoes) {
+      await Restricao.create(
+        {
+          id_retira: restricao.id_retira,
+          id_escolhido: restricao.id_escolhido,
+        },
+        { transaction: t }
+      );
+    }
+    await t.commit();
+
+    // If the execution reaches this line, the transaction has been committed successfully
+    // `result` is whatever was returned from the transaction callback (the `user`, in this case)
+  } catch (error) {
+    console.log(error);
+  }
+  res.status(201).json({});
+});
+
+function shuffle(array) {
+  array.sort(() => Math.random() - 0.5);
+}
+
+router.get("/sorteia", async (req, res) => {
+  const todos = await Pessoa.findAll({ attributes: ["id"] });
+  // console.log(Math.floor(Math.random() * todos.length + 1));
+  shuffle(todos);
+  try {
+    for (const pessoa of todos) {
+      const restricoes = await Restricao.findAll({
+        attributes: ["id_escolhido"],
+        where: { id_retira: pessoa.id },
+      });
+
+      const restricoesId = [];
+
+      restricoes.forEach((element) => {
+        restricoesId.push(element.id_escolhido);
+      });
+
+      const disponiveis = await Pessoa.findAll({
+        attributes: ["id"],
+        where: {
+          id: {
+            [Op.notIn]: restricoesId,
+          },
+          escolhido: {
+            [Op.eq]: 0,
+          },
+        },
+      });
+
+      shuffle(disponiveis);
+
+      const indice = Math.floor(Math.random() * disponiveis.length);
+      console.log(
+        `Indice: ${indice} -> Disponíveis: ${disponiveis} -> Tamanho: ${disponiveis.length}`
+      );
+      const escolhido = disponiveis[indice];
+
+      //update retirou
+
+      await Pessoa.update(
+        { escolheu: 1 },
+        {
+          where: {
+            id: pessoa.id,
+          },
+        }
+      );
+
+      //update escolhido
+
+      await Pessoa.update(
+        { escolhido: 1 },
+        {
+          where: {
+            id: escolhido.id,
+          },
+        }
+      );
+
+      //insert par
+      await Par.create({
+        id_retira: pessoa.id,
+        id_escolhido: escolhido.id,
+      });
+    }
+    res.status(200).json({ mensagem: "Sorteio Realizado com Sucesso!" });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ mensagem: "Ocorreu algum problema, refazer...", erro: error });
+  }
 });
 
 module.exports = router;
