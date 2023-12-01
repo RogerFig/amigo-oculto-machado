@@ -46,7 +46,7 @@ botaoSalvar.addEventListener("click", (e) => {
 
 async function enviaPost(user) {
   try {
-    const retorno = await fetch("http://localhost:3000", {
+    const retorno = await fetch(`${domain}`, {
       method: "POST",
       headers: {
         Accept: "application/json",

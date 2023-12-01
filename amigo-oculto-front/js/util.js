@@ -14,7 +14,7 @@ const botaoReset = document.querySelector("#btnReset");
 
 async function resetValues(e) {
   if (confirm("Confirmar a exclusão?")) {
-    const retorno = await fetch(`http://localhost:3000`, {
+    const retorno = await fetch(`${domain}`, {
       method: "PUT",
     });
   } else {
@@ -43,7 +43,7 @@ botaoSortear.addEventListener("click", async (e) => {
 });
 
 async function getSorteio() {
-  const retorno = await fetch(`http://localhost:3000/sorteia`, {
+  const retorno = await fetch(`${domain}/sorteia`, {
     method: "GET",
   });
   return retorno;

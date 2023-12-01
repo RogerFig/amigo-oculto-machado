@@ -22,14 +22,14 @@ tabela.addEventListener("click", async (e) => {
 });
 
 async function getPessoa(id) {
-  const retorno = await fetch(`http://localhost:3000?id=${id}`);
+  const retorno = await fetch(`${domain}?id=${id}`);
   const pessoa = await retorno.json();
   return pessoa;
 }
 
 async function editarUser(user) {
   try {
-    const retorno = await fetch(`http://localhost:3000/${user.id}`, {
+    const retorno = await fetch(`${domain}/${user.id}`, {
       method: "PUT",
       headers: {
         Accept: "application/json",

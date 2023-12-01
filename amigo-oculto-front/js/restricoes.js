@@ -2,14 +2,14 @@ const tabelaLista = document.querySelector("#lista tbody");
 let dropdownArray = [];
 
 async function consultaRestricoes() {
-  const retorno = await fetch(`http://localhost:3000/restricao`);
+  const retorno = await fetch(`${domain}/restricao`);
   const restricoes = await retorno.json();
 
   return restricoes;
 }
 
 async function consultaPessoas() {
-  const retorno = await fetch(`http://localhost:3000`);
+  const retorno = await fetch(`${domain}`);
   const pessoas = await retorno.json();
 
   const restricoes = await consultaRestricoes();
@@ -107,7 +107,7 @@ function addEventOnDropdowns() {
 }
 
 async function saveChecked(selecionados) {
-  const retorno = await fetch(`http://localhost:3000/restricao`, {
+  const retorno = await fetch(`${domain}/restricao`, {
     method: "POST",
     headers: {
       Accept: "application/json",

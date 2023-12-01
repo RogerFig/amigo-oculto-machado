@@ -14,7 +14,7 @@ tabela.addEventListener("click", (e) => {
 
 async function excluirUser(id) {
   try {
-    const retorno = await fetch(`http://localhost:3000/${id}`, {
+    const retorno = await fetch(`${domain}/${id}`, {
       method: "DELETE",
       headers: {
         Accept: "application/json",
