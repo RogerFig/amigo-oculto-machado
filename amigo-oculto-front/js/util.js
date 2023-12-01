@@ -30,3 +30,21 @@ const botaoRestricoes = document.querySelector("#btnRestricoes");
 botaoRestricoes.addEventListener("click", (e) => {
   window.location.href = "restricoes.html";
 });
+
+const botaoSortear = document.querySelector("#btnSortear");
+
+botaoSortear.addEventListener("click", async (e) => {
+  const result = await getSorteio();
+  if ((result.status = 200)) {
+    window.location.href = "listagem.html";
+  } else {
+    alert("Aconteceu algum problema, verificar...");
+  }
+});
+
+async function getSorteio() {
+  const retorno = await fetch(`http://localhost:3000/sorteia`, {
+    method: "GET",
+  });
+  return retorno;
+}

@@ -205,4 +205,28 @@ router.get("/sorteia", async (req, res) => {
   }
 });
 
+router.get("/u/:hash", async (req, res) => {
+  const { hash } = req.params;
+
+  const pessoa = await Pessoa.findOne({
+    where: {
+      hash: hash,
+    },
+  });
+
+  const escolhido = await Par.findOne({
+    where: {
+      id_retira: pessoa.id,
+    },
+  });
+
+  const dados_escolhido = await Pessoa.findOne({
+    where: {
+      id: escolhido.id_escolhido,
+    },
+  });
+
+  res.render("resultado", { pessoa, escolhido, dados_escolhido });
+});
+
 module.exports = router;

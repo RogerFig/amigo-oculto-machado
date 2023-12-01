@@ -1,0 +1,49 @@
+* {
+  margin: 0px;
+  padding: 0px;
+  box-sizing: border-box;
+}
+
+.copy-button {
+  padding: 5px 10px;
+  background: #5784f5;
+  color: #fff;
+  font-size: 18px;
+  border: none;
+  outline: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.copy-button:active {
+  background: #809ce2;
+}
+
+.copy-button::before {
+  content: "Copiado!";
+  position: relative;
+  top: -50px;
+  right: 0px;
+  background: #5c81dc;
+  padding: 8px 10px;
+  border-radius: 20px;
+  font-size: 15px;
+  display: none;
+}
+
+.copy-button::after {
+  content: "";
+  position: relative;
+  top: -20px;
+  right: 20px;
+  width: 10px;
+  height: 10px;
+  background: #5c81dc;
+  transform: rotate(45deg);
+  display: none;
+}
+
+.copy-button.active::before,
+.copy-button.active::after {
+  display: block;
+}
