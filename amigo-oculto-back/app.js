@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const { sequelize } = require("./models");
 
 const PORT = 3000;
 
@@ -68,5 +69,9 @@ app.delete("/:id", (req, res) => {
 });
 
 app.put("/:id", (req, res) => {});
+
+sequelize.sync().then(() => {
+  console.log("Conectado no DB com sucesso!");
+});
 
 app.listen(PORT, () => console.log(`Aplicação rodando na porta ${PORT}`));
