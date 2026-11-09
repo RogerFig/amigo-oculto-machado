@@ -35,6 +35,7 @@ function preencheTabela(pessoas, restricoes) {
     cell.className = "w-75";
     const dropdown = document.createElement("div");
     dropdown.className = "dropdown";
+    dropdown.setAttribute("data-id-retira", pessoa.id);
     const button = document.createElement("button");
     button.type = "button";
     button.className = "btn btn-outline-success form-control dropdown-toggle";
@@ -76,6 +77,7 @@ function preencheSelect(list, pessoas, restricoes, idPessoa) {
     input.type = "checkbox";
     input.value = `${idPessoa}_${pessoa.id}`;
     input.checked = selectBox(idPessoa, pessoa.id, restricoes) === "checked";
+    input.disabled = idPessoa === pessoa.id;
     label.append(input, document.createTextNode(` ${pessoa.nick}`));
     list.append(label);
   });
@@ -86,33 +88,40 @@ function addEventOnDropdowns() {
 
   dropdownArray.forEach(function (elem) {
     elem.addEventListener("hide.bs.dropdown", function (e) {
+      const id_retira = Number(e.target.parentElement.getAttribute("data-id-retira"));
       const checkboxArray = [
         ...e.target.parentElement.querySelectorAll("input[type=checkbox]"),
       ];
-      const selecionados = [];
+      const id_escolhidos = [];
       checkboxArray.forEach((elemento) => {
         if (elemento.checked) {
-          elementoArray = elemento.value.split("_");
-          selecionados.push({
-            id_retira: elementoArray[0],
-            id_escolhido: elementoArray[1],
-          });
+          id_escolhidos.push(Number(elemento.value.split("_")[1]));
         }
       });
-      saveChecked(selecionados);
+      return saveChecked({ id_retira, id_escolhidos });
     });
   });
 }
 
-async function saveChecked(selecionados) {
-  const retorno = await window.apiFetch(`${domain}/restricao`, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(selecionados),
-  });
+async function saveChecked(restricoes) {
+  try {
+    const retorno = await window.apiFetch(`${domain}/restricao`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(restricoes),
+    });
+    if (!retorno.ok) {
+      const body = await retorno.json().catch(() => ({}));
+      throw new Error(body.mensagem || "Não foi possível salvar as restrições.");
+    }
+    await consultaPessoas();
+  } catch (error) {
+    alert(error.message);
+    await consultaPessoas().catch(() => {});
+  }
 }
 
 consultaPessoas();

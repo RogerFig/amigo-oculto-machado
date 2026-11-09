@@ -96,6 +96,7 @@ test("admin tables render untrusted names, nicks and hashes as text rather than 
   const restrictions = render("restricoes.js", people, [{ id_retira: 7, id_escolhido: 7 }]);
   const label = restrictions.children[0].children[2].children[0].children[1].children[0].children[0];
   assert.equal(label.children[0].checked, true);
+  assert.equal(label.children[0].disabled, true);
   assert.equal(label.textContent, ` ${payload}`);
 });
 
@@ -104,7 +105,7 @@ test("new participant links use random tokens without changing existing hashes",
   const originalMax = Pessoa.max;
   const originalCreate = Pessoa.create;
   const saved = [];
-  Pessoa.max = async () => 4;
+  Pessoa.max = async () => { throw Error("MAX(id) must not be used"); };
   Pessoa.create = async (data) => { saved.push(data); return data; };
   try {
     for (let i = 0; i < 2; i++) {
@@ -115,6 +116,7 @@ test("new participant links use random tokens without changing existing hashes",
     assert.match(saved[0].hash, /^[a-f0-9]{64}$/);
     assert.match(saved[1].hash, /^[a-f0-9]{64}$/);
     assert.notEqual(saved[0].hash, saved[1].hash);
+    assert.equal(saved[0].id, undefined);
   } finally {
     Pessoa.max = originalMax;
     Pessoa.create = originalCreate;

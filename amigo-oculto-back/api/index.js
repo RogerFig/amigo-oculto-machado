@@ -27,22 +27,28 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
-  const { nome_completo, nick, escolheu, escolhido } = req.body;
+  const { nome_completo, nick, escolheu = false, escolhido = false } = req.body || {};
+  if (
+    typeof nome_completo !== "string" || !nome_completo.trim() || nome_completo.length > 255 ||
+    typeof nick !== "string" || !nick.trim() || nick.length > 255 ||
+    typeof escolheu !== "boolean" || typeof escolhido !== "boolean"
+  ) {
+    return res.status(400).json({ mensagem: "Dados do participante inválidos." });
+  }
 
-  const max_id = await Pessoa.max("id", { where: {} });
-  // Only new links change: keep existing hashes so issued links remain valid.
-  const hash = crypto.randomBytes(32).toString("hex");
-
-  const novaPessoa = await Pessoa.create({
-    id: max_id + 1,
-    nome_completo,
-    nick,
-    escolheu,
-    escolhido,
-    hash,
-  });
-
-  res.status(201).json({ mensagem: "Usuário inserido com sucesso" });
+  try {
+    // Let MySQL's autoIncrement allocate the ID, even for concurrent requests.
+    await Pessoa.create({
+      nome_completo: nome_completo.trim(),
+      nick: nick.trim(),
+      escolheu,
+      escolhido,
+      hash: crypto.randomBytes(32).toString("hex"),
+    });
+    return res.status(201).json({ mensagem: "Usuário inserido com sucesso" });
+  } catch (_error) {
+    return res.status(500).json({ mensagem: "Não foi possível cadastrar o participante." });
+  }
 });
 
 router.delete("/:id", async (req, res) => {
@@ -103,38 +109,41 @@ router.get("/restricao", async (req, res) => {
 });
 
 router.post("/restricao", async (req, res) => {
-  const restricoes = req.body;
-  console.log(restricoes);
-
-  const t = await sequelize.transaction();
+  const { id_retira, id_escolhidos } = req.body || {};
+  if (
+    !Number.isSafeInteger(id_retira) || id_retira < 1 ||
+    !Array.isArray(id_escolhidos) ||
+    id_escolhidos.some((id) => !Number.isSafeInteger(id) || id < 1 || id === id_retira) ||
+    new Set(id_escolhidos).size !== id_escolhidos.length
+  ) {
+    return res.status(400).json({ mensagem: "Restrições inválidas." });
+  }
 
   try {
-    await Restricao.destroy(
-      {
-        where: {
-          id_retira: restricoes[0].id_retira,
-        },
-      },
-      { transaction: t }
-    );
+    const result = await sequelize.transaction(async (transaction) => {
+      const giver = await Pessoa.findByPk(id_retira, { transaction, lock: transaction.LOCK.UPDATE });
+      if (!giver) return false;
+      if (id_escolhidos.length) {
+        const recipients = await Pessoa.count({
+          where: { id: { [Op.in]: id_escolhidos } }, transaction,
+        });
+        if (recipients !== id_escolhidos.length) return false;
+      }
 
-    for (const restricao of restricoes) {
-      await Restricao.create(
-        {
-          id_retira: restricao.id_retira,
-          id_escolhido: restricao.id_escolhido,
-        },
-        { transaction: t }
-      );
-    }
-    await t.commit();
-
-    // If the execution reaches this line, the transaction has been committed successfully
-    // `result` is whatever was returned from the transaction callback (the `user`, in this case)
-  } catch (error) {
-    console.log(error);
+      await Restricao.destroy({ where: { id_retira }, transaction });
+      if (id_escolhidos.length) {
+        await Restricao.bulkCreate(
+          id_escolhidos.map((id_escolhido) => ({ id_retira, id_escolhido })),
+          { transaction }
+        );
+      }
+      return true;
+    });
+    if (!result) return res.status(404).json({ mensagem: "Participante não encontrado." });
+    return res.status(200).json({ mensagem: "Restrições atualizadas." });
+  } catch (_error) {
+    return res.status(500).json({ mensagem: "Não foi possível salvar as restrições." });
   }
-  res.status(201).json({});
 });
 
 router.get("/sorteia", async (req, res) => {
