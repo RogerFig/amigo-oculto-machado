@@ -19,3 +19,8 @@
 - **Arquivos adicionais modificados:** `amigo-oculto-back/app.js`, `auth/admin-auth.js`, `.env.example`, `package.json`, `scripts/sync-admin.js`, `admin/`, testes de autenticação/HTTP/frontend e `test/admin-assets.test.js`; `amigo-oculto-front/js/admin-entry.js`, `js/auth-client.js`, `js/login.js`, quatro páginas administrativas HTML; `AGENTS.md`, `docs/implantacao.md` e este relatório.
 - **Testes locais da correção:** `npm test` **18/18** (inclui sincronização do painel, redirecionamento, Origin do backend e HTTP com cookie/sessão). Verificação adicional com a API real e banco **local somente leitura**: `/admin/login.html` 200, script 200, login 200, sessão 200, listagem autenticada 200. Nenhum teste de escrita ou sorteio no banco real.
 - **Pendência para concluir a validação em produção:** após o deploy autorizado, verificar em navegador que o redirecionamento termina em `https://amigo-oculto-back.onrender.com/admin/index.html` e `/auth/session` retorna `200` após login. Nenhuma alteração de dados/tokens é necessária.
+
+### Ajuste de entrada pela raiz — 2026-11-09
+
+- Após o deploy, o responsável confirmou que `/login.html` funciona, mas a raiz do frontend redirecionava a `/admin/`, que exigia autenticação e respondia JSON `401` em vez de mostrar o login.
+- O redirecionamento da raiz aponta agora para `/admin/login.html`; acessos diretos a `/admin` e `/admin/` também redirecionam para o login. O pacote estático é sincronizado com `npm run sync:admin` e o teste HTTP verifica ambos os caminhos. Nenhum dado, token ou senha foi alterado.

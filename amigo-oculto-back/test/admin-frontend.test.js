@@ -59,6 +59,18 @@ test("public Render admin pages redirect to first-party backend admin pages", ()
   }
 });
 
+test("public Render root opens the backend login instead of an unauthenticated admin directory", () => {
+  for (const pathname of ["/", "/index.html"]) {
+    let destination;
+    const window = { location: {
+      hostname: "amigo-oculto-frong.onrender.com", pathname,
+      search: "", hash: "", replace(next) { destination = next; },
+    } };
+    runInNewContext(readFileSync(join(scripts, "admin-entry.js"), "utf8"), { window });
+    assert.equal(destination, `https://amigo-oculto-back.onrender.com/admin/${pathname === "/" ? "login" : "index"}.html`);
+  }
+});
+
 test("admin pages already on the API origin do not redirect", () => {
   const window = { location: {
     hostname: "amigo-oculto-back.onrender.com", pathname: "/admin/login.html",

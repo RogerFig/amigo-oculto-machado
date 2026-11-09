@@ -43,6 +43,11 @@ test("HTTP: anonymous admin endpoints deny access before any route is executed; 
     const loginPage = await fetch(url + "/admin/login.html");
     assert.equal(loginPage.status, 200);
     assert.match(await loginPage.text(), /adminLoginForm/);
+    for (const path of ["/admin", "/admin/"]) {
+      const entry = await fetch(url + path, { redirect: "manual" });
+      assert.equal(entry.status, 302);
+      assert.equal(entry.headers.get("location"), "/admin/login.html");
+    }
     const script = await fetch(url + "/admin/js/auth-client.js");
     assert.equal(script.status, 200);
     assert.match(await script.text(), /fetchAdminSession/);

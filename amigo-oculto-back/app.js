@@ -37,6 +37,10 @@ function createApp({ routes = rotas, settings = process.env } = {}) {
   app.use(express.json({ limit: "100kb" }));
 
   // Only the static admin UI is public; all data still passes through authenticated API routes.
+  app.get(["/admin", "/admin/"], (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    res.redirect(302, "/admin/login.html");
+  });
   app.use("/admin", express.static(path.join(__dirname, "admin"), { index: false }));
 
   app.set("view engine", "ejs");
