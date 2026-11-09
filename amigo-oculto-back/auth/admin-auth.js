@@ -23,6 +23,7 @@ function createAdminAuth({
   adminPassword,
   sessionSecret,
   frontendOrigin,
+  adminOrigin = frontendOrigin,
   secureCookie,
   sessionTtlSeconds = DEFAULT_SESSION_TTL_SECONDS,
   now = () => Date.now(),
@@ -36,27 +37,29 @@ function createAdminAuth({
   if (typeof frontendOrigin !== "string") {
     throw new Error("FRONTEND_ORIGIN é obrigatória.");
   }
+  if (typeof adminOrigin !== "string") {
+    throw new Error("ADMIN_ORIGIN é obrigatória.");
+  }
 
-  let parsedOrigin;
-  try {
-    parsedOrigin = new URL(frontendOrigin);
-  } catch {
-    throw new Error("FRONTEND_ORIGIN precisa ser uma origem HTTP(S) válida.");
-  }
-  if (
-    !["http:", "https:"].includes(parsedOrigin.protocol) ||
-    parsedOrigin.origin !== frontendOrigin
-  ) {
-    throw new Error("FRONTEND_ORIGIN deve conter somente esquema, host e porta.");
-  }
   const localHosts = ["localhost", "127.0.0.1", "[::1]"];
-  if (parsedOrigin.protocol !== "https:" && !localHosts.includes(parsedOrigin.hostname)) {
-    throw new Error("HTTPS é obrigatório fora de localhost.");
+  for (const [name, origin] of [["FRONTEND_ORIGIN", frontendOrigin], ["ADMIN_ORIGIN", adminOrigin]]) {
+    let parsed;
+    try {
+      parsed = new URL(origin);
+    } catch {
+      throw new Error(`${name} precisa ser uma origem HTTP(S) válida.`);
+    }
+    if (!["http:", "https:"].includes(parsed.protocol) || parsed.origin !== origin) {
+      throw new Error(`${name} deve conter somente esquema, host e porta.`);
+    }
+    if (parsed.protocol !== "https:" && !localHosts.includes(parsed.hostname)) {
+      throw new Error("HTTPS é obrigatório fora de localhost.");
+    }
   }
   if (typeof secureCookie !== "boolean") {
     throw new Error("AUTH_COOKIE_SECURE deve ser true ou false.");
   }
-  if (parsedOrigin.protocol === "https:" && !secureCookie) {
+  if ((frontendOrigin.startsWith("https:") || adminOrigin.startsWith("https:")) && !secureCookie) {
     throw new Error("AUTH_COOKIE_SECURE=true é obrigatório para origens HTTPS.");
   }
   if (
@@ -68,7 +71,7 @@ function createAdminAuth({
   }
 
   function allowedOrigin(req) {
-    return req.headers.origin === frontendOrigin;
+    return req.headers.origin === frontendOrigin || req.headers.origin === adminOrigin;
   }
 
   function sign(payload) {

@@ -44,3 +44,26 @@ test("Render frontend calls the separate Render API with credentials and CSRF", 
   assert.equal(calls[1].options.headers.get("X-CSRF-Token"), "csrf-test");
   assert.equal(calls[1].options.headers.get("Content-Type"), "application/json");
 });
+
+test("public Render admin pages redirect to first-party backend admin pages", () => {
+  for (const page of ["login.html", "index.html", "listagem.html", "restricoes.html"]) {
+    const url = new URL(`https://amigo-oculto-frong.onrender.com/${page}`);
+    let destination;
+    const window = { location: {
+      hostname: url.hostname, pathname: url.pathname, search: url.search, hash: url.hash,
+      replace(next) { destination = next; },
+    } };
+    runInNewContext(readFileSync(join(scripts, "admin-entry.js"), "utf8"), { window });
+    assert.equal(destination, `https://amigo-oculto-back.onrender.com/admin/${page}`);
+    assert.equal(window.adminRedirecting, true);
+  }
+});
+
+test("admin pages already on the API origin do not redirect", () => {
+  const window = { location: {
+    hostname: "amigo-oculto-back.onrender.com", pathname: "/admin/login.html",
+    search: "", hash: "", replace() { throw Error("unexpected redirect"); },
+  } };
+  runInNewContext(readFileSync(join(scripts, "admin-entry.js"), "utf8"), { window });
+  assert.equal(window.adminRedirecting, undefined);
+});

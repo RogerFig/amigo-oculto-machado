@@ -6,7 +6,7 @@ async function fetchAdminSession() {
     credentials: "include",
   });
 
-  if (response.status === 401) {
+  if (response.status === 401 && !window.adminRedirecting) {
     window.location.replace("login.html");
     throw new Error("Sessão administrativa necessária.");
   }
@@ -46,7 +46,7 @@ window.apiFetch = async (url, options = {}) => {
     credentials: "include",
   });
 
-  if (response.status === 401) {
+  if (response.status === 401 && !window.adminRedirecting) {
     csrfToken = null;
     sessionPromise = null;
     window.location.replace("login.html");

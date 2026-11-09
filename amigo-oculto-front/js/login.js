@@ -2,13 +2,15 @@ const loginForm = document.querySelector("#adminLoginForm");
 const loginMessage = document.querySelector("#loginMessage");
 const loginButton = document.querySelector("#btnLogin");
 
-fetch(`${window.apiDomain}/auth/session`, { credentials: "include" })
-  .then((response) => {
-    if (response.ok) window.location.replace("index.html");
-  })
-  .catch(() => {
-    loginMessage.textContent = "Não foi possível validar a sessão existente.";
-  });
+if (!window.adminRedirecting) {
+  fetch(`${window.apiDomain}/auth/session`, { credentials: "include" })
+    .then((response) => {
+      if (response.ok) window.location.replace("index.html");
+    })
+    .catch(() => {
+      loginMessage.textContent = "Não foi possível validar a sessão existente.";
+    });
+}
 
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();

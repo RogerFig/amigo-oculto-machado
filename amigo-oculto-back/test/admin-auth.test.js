@@ -128,6 +128,29 @@ test("valid login issues an HttpOnly signed cookie and CSRF token accepted by pr
   assert.equal(csrfAccepted, true);
 });
 
+test("backend-hosted admin UI can log in from the API origin without trusting arbitrary origins", () => {
+  const auth = createAdminAuth({
+    ...config,
+    frontendOrigin: "https://amigo-oculto-frong.onrender.com",
+    adminOrigin: "https://amigo-oculto-back.onrender.com",
+    secureCookie: true,
+  });
+  const res = createResponse();
+  auth.login(request({
+    method: "POST", origin: "https://amigo-oculto-back.onrender.com",
+    body: { password: config.adminPassword },
+  }), res);
+  assert.equal(res.statusCode, 200);
+  assert.match(res.headers["Set-Cookie"], /SameSite=None; Max-Age/);
+
+  const denied = createResponse();
+  auth.login(request({
+    method: "POST", origin: "https://other.onrender.com",
+    body: { password: config.adminPassword },
+  }), denied);
+  assert.equal(denied.statusCode, 403);
+});
+
 test("local login cookies use SameSite=Lax without Secure", () => {
   const auth = createAdminAuth(config);
   const res = createResponse();

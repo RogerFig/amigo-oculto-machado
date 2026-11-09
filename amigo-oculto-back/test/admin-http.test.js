@@ -40,6 +40,15 @@ async function withServer(run, overrides = {}) {
 
 test("HTTP: anonymous admin endpoints deny access before any route is executed; result remains public", async () => {
   await withServer(async ({ url, writes }) => {
+    const loginPage = await fetch(url + "/admin/login.html");
+    assert.equal(loginPage.status, 200);
+    assert.match(await loginPage.text(), /adminLoginForm/);
+    const script = await fetch(url + "/admin/js/auth-client.js");
+    assert.equal(script.status, 200);
+    assert.match(await script.text(), /fetchAdminSession/);
+    const adminPage = await fetch(url + "/admin/index.html");
+    assert.equal(adminPage.status, 200);
+    assert.match(await adminPage.text(), /btnSortear/);
     for (const [method, path] of [
       ["GET", "/"], ["GET", "/?id=1"], ["GET", "/restricao"],
       ["GET", "/sorteia"], ["POST", "/"], ["PUT", "/"],
@@ -123,16 +132,39 @@ test("HTTP: login, session, CSRF, allowed and foreign origins, logout", async ()
   });
 });
 
+test("HTTP: localhost backend admin UI accepts its own origin without a new local env variable", async () => {
+  await withServer(async ({ url }) => {
+    const login = await fetch(url + "/auth/login", {
+      method: "POST", headers: { Origin: "http://localhost:3000", "Content-Type": "application/json" },
+      body: JSON.stringify({ password: PASSWORD }),
+    });
+    assert.equal(login.status, 200);
+    const cookie = login.headers.get("set-cookie").split(";")[0];
+    const session = await fetch(url + "/auth/session", { headers: { Cookie: cookie } });
+    assert.equal(session.status, 200);
+  });
+});
+
 test("HTTP: Render-style HTTPS frontend receives cross-site Secure cookie", async () => {
   const frontend = "https://amigo-oculto-frong.onrender.com";
   await withServer(async ({ url }) => {
-    const response = await fetch(url + "/auth/login", {
-      method: "POST", headers: { Origin: frontend, "Content-Type": "application/json" },
-      body: JSON.stringify({ password: PASSWORD }),
-    });
-    assert.equal(response.status, 200);
-    assert.equal(response.headers.get("access-control-allow-origin"), frontend);
-    assert.match(response.headers.get("set-cookie"), /SameSite=None/);
-    assert.match(response.headers.get("set-cookie"), /Secure/);
-  }, { FRONTEND_ORIGIN: frontend, AUTH_COOKIE_SECURE: "true" });
+    for (const origin of [frontend, "https://amigo-oculto-back.onrender.com"]) {
+      const response = await fetch(url + "/auth/login", {
+        method: "POST", headers: { Origin: origin, "Content-Type": "application/json" },
+        body: JSON.stringify({ password: PASSWORD }),
+      });
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get("access-control-allow-origin"), frontend);
+      assert.match(response.headers.get("set-cookie"), /SameSite=None/);
+      assert.match(response.headers.get("set-cookie"), /Secure/);
+      const cookie = response.headers.get("set-cookie").split(";")[0];
+      const session = await fetch(url + "/auth/session", { headers: { Cookie: cookie } });
+      assert.equal(session.status, 200);
+      const { csrfToken } = await session.json();
+      const logout = await fetch(url + "/auth/logout", {
+        method: "POST", headers: { Cookie: cookie, Origin: origin, "X-CSRF-Token": csrfToken },
+      });
+      assert.equal(logout.status, 204);
+    }
+  }, { FRONTEND_ORIGIN: frontend, ADMIN_ORIGIN: undefined, AUTH_COOKIE_SECURE: "true" });
 });

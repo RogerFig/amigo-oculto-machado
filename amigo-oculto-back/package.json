@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node --test",
+    "sync:admin": "node scripts/sync-admin.js",
     "dev": "nodemon app.js",
     "prod": "node app.js"
   },

@@ -47,6 +47,14 @@ python3 -m http.server 8080
 
 Abra `http://localhost:8080`. `js/geral.js` aponta para `http://localhost:3000` em `localhost`/`127.0.0.1`. O CORS local deve permitir exatamente `http://localhost:8080`.
 
+## Área administrativa sem cookies de terceiros
+
+Para evitar que o navegador descarte a sessão entre os dois serviços Render, a API serve uma cópia dos arquivos estáticos do painel em `/admin/`. Em produção, `https://amigo-oculto-frong.onrender.com/login.html` (e as outras páginas administrativas) redireciona para `https://amigo-oculto-back.onrender.com/admin/login.html`. O login, os arquivos do painel e as chamadas da API ficam, assim, na **mesma origem do backend**; os links individuais `/u/:hash` continuam inalterados. As páginas estáticas não contêm dados do banco, que permanecem protegidos nas rotas da API.
+
+Como os serviços podem ter diretórios-raiz distintos no Render, o painel é empacotado em `amigo-oculto-back/admin/`. **Após qualquer mudança em `amigo-oculto-front/`, execute `npm run sync:admin` dentro de `amigo-oculto-back/`** e inclua os arquivos copiados no mesmo commit. `npm test` verifica se o pacote está sincronizado. A cópia não exige acesso à pasta irmã quando o backend inicia no Render.
+
+Localmente, a interface original em `http://localhost:8080/login.html` continua funcionando. A cópia também pode ser aberta diretamente em `http://localhost:3000/admin/login.html` com o mesmo `.env` local. `ADMIN_ORIGIN` é opcional e permite configurar uma origem própria da API; por padrão, o backend reconhece as origens conhecidas de desenvolvimento/Render. Não inclua senha no frontend.
+
 ## Render (produção)
 
 Configure os valores de produção no Environment do serviço backend no Render, não em arquivos do repositório. Mantenha os valores de banco (`DB_DIALECT`, `DB_HOST`, `DB_PORT`, `DATABASE`, `DB_USER`, `DB_PASSWORD`) e os segredos (`ADMIN_PASSWORD`, `SESSION_SECRET`) de produção que já estão configurados. Confirme também:
@@ -57,7 +65,7 @@ Configure os valores de produção no Environment do serviço backend no Render,
 
 O Render fornece `PORT` para o backend. O frontend publicado em `amigo-oculto-frong.onrender.com` chama a API em `amigo-oculto-back.onrender.com`; o backend permite a origem do frontend por `FRONTEND_ORIGIN` e o frontend envia cookies com credenciais. Como os domínios Render são sites diferentes para o navegador, o cookie de produção usa `SameSite=None; Secure`; as verificações de Origin exata e CSRF continuam obrigatórias. Depois de salvar as variáveis, faça um deploy e valide login, sessão e operações protegidas nos dois ambientes.
 
-Alguns navegadores podem bloquear cookies de terceiros mesmo com essa configuração. Para compatibilidade mais ampla, use domínios próprios sob o mesmo domínio registrável para frontend e API, ou publique a API sob a mesma origem do frontend via proxy.
+Cookies de terceiros podem ser bloqueados na interface antiga do serviço frontend; o redirecionamento para `/admin/login.html` no backend evita essa dependência. Domínios próprios compartilhados ou proxy continuam alternativas futuras.
 
 O responsável confirmou deploy automático após push para a branch configurada nos dois serviços Render. **Não faça commit/push ou altere o Environment sem aprovação explícita para publicar.** Nenhuma credencial de produção deve ser colocada em commit ou reutilizada no `.env` local.
 
@@ -81,6 +89,6 @@ mysql -u root -e "SHOW TABLES FROM \`$RESTORE_DATABASE\`"
 
 ## Verificações atuais
 
-- `npm test` executa `node --test`, com testes unitários e HTTP isolados de autenticação em `amigo-oculto-back/test/`; os 13 testes passaram em 2026-11-08. Os testes HTTP não conectam ao banco nem executam sorteios.
+- `npm test` executa `node --test`, com testes unitários e HTTP isolados de autenticação em `amigo-oculto-back/test/`, incluindo o pacote estático de `/admin/`. Os testes HTTP não conectam ao banco nem executam sorteios.
 - Consulta somente leitura via `mysql2` confirmou conexão à base local, MySQL 8.4.13 e três tabelas vazias; a criação anterior das tabelas por `sequelize.sync()` consta da configuração local, mas **não foi repetida** nesta verificação.
 - Não há lint/typecheck, migrações versionadas nem rollback automatizado configurados.

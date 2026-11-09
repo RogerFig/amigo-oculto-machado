@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const rotas = require("./api");
 const { sequelize } = require("./models");
 const { createAdminAuth } = require("./auth/admin-auth");
@@ -15,6 +16,13 @@ function createApp({ routes = rotas, settings = process.env } = {}) {
     adminPassword: settings.ADMIN_PASSWORD,
     sessionSecret: settings.SESSION_SECRET,
     frontendOrigin: settings.FRONTEND_ORIGIN,
+    adminOrigin: settings.ADMIN_ORIGIN || (
+      settings.FRONTEND_ORIGIN === "https://amigo-oculto-frong.onrender.com"
+        ? "https://amigo-oculto-back.onrender.com"
+        : settings.FRONTEND_ORIGIN && settings.FRONTEND_ORIGIN.startsWith("http://localhost:")
+          ? `http://localhost:${settings.PORT || 3000}`
+          : settings.FRONTEND_ORIGIN
+    ),
     secureCookie: settings.AUTH_COOKIE_SECURE === "true",
     sessionTtlSeconds: Number(settings.ADMIN_SESSION_TTL_SECONDS || 8 * 60 * 60),
   });
@@ -27,6 +35,9 @@ function createApp({ routes = rotas, settings = process.env } = {}) {
     allowedHeaders: ["Content-Type", "X-CSRF-Token"],
   }));
   app.use(express.json({ limit: "100kb" }));
+
+  // Only the static admin UI is public; all data still passes through authenticated API routes.
+  app.use("/admin", express.static(path.join(__dirname, "admin"), { index: false }));
 
   app.set("view engine", "ejs");
   app.set("views", "./views");
