@@ -3,6 +3,14 @@ const router = express.Router();
 const { Pessoa, Par, Restricao, sequelize } = require("../models");
 const crypto = require("crypto");
 const { Op } = require("sequelize");
+const { assignPairs } = require("../draw/assign");
+
+class DrawError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+}
 
 router.get("/", async (req, res) => {
   const { id } = req.query;
@@ -22,7 +30,8 @@ router.post("/", async (req, res) => {
   const { nome_completo, nick, escolheu, escolhido } = req.body;
 
   const max_id = await Pessoa.max("id", { where: {} });
-  const hashfull = crypto.createHash("md5").update(nome_completo).digest("hex");
+  // Only new links change: keep existing hashes so issued links remain valid.
+  const hash = crypto.randomBytes(32).toString("hex");
 
   const novaPessoa = await Pessoa.create({
     id: max_id + 1,
@@ -30,7 +39,7 @@ router.post("/", async (req, res) => {
     nick,
     escolheu,
     escolhido,
-    hash: hashfull.substring(0, 8),
+    hash,
   });
 
   res.status(201).json({ mensagem: "Usuário inserido com sucesso" });
@@ -128,105 +137,60 @@ router.post("/restricao", async (req, res) => {
   res.status(201).json({});
 });
 
-function shuffle(array) {
-  array.sort(() => Math.random() - 0.5);
-}
-
 router.get("/sorteia", async (req, res) => {
-  const todos = await Pessoa.findAll({ attributes: ["id"] });
-  // console.log(Math.floor(Math.random() * todos.length + 1));
-  shuffle(todos);
   try {
-    for (const pessoa of todos) {
-      const restricoes = await Restricao.findAll({
-        attributes: ["id_escolhido"],
-        where: { id_retira: pessoa.id },
+    await sequelize.transaction(async (transaction) => {
+      // Lock the participant rows before checking existing results or writing any pairs.
+      const people = await Pessoa.findAll({
+        attributes: ["id", "escolheu", "escolhido"],
+        order: [["id", "ASC"]],
+        transaction,
+        lock: transaction.LOCK.UPDATE,
       });
+      if (people.length < 2) {
+        throw new DrawError(422, "Cadastre ao menos duas pessoas antes de sortear.");
+      }
+      const existing = await Par.count({ transaction });
+      if (existing || people.some((person) => person.escolheu || person.escolhido)) {
+        throw new DrawError(409, "Já existe um sorteio. Não é possível sortear novamente.");
+      }
 
-      const restricoesId = [];
-
-      restricoes.forEach((element) => {
-        restricoesId.push(element.id_escolhido);
+      const restrictions = await Restricao.findAll({
+        attributes: ["id_retira", "id_escolhido"], transaction,
       });
+      const pairs = assignPairs(people.map((person) => person.id), restrictions);
+      if (!pairs) {
+        throw new DrawError(422, "Não há sorteio possível com as restrições atuais.");
+      }
 
-      const disponiveis = await Pessoa.findAll({
-        attributes: ["id"],
-        where: {
-          id: {
-            [Op.notIn]: restricoesId,
-          },
-          escolhido: {
-            [Op.eq]: 0,
-          },
-        },
-      });
-
-      shuffle(disponiveis);
-
-      const indice = Math.floor(Math.random() * disponiveis.length);
-      console.log(
-        `Indice: ${indice} -> Disponíveis: ${disponiveis} -> Tamanho: ${disponiveis.length}`
-      );
-      const escolhido = disponiveis[indice];
-
-      //update retirou
-
+      await Par.bulkCreate(pairs, { transaction });
       await Pessoa.update(
-        { escolheu: 1 },
-        {
-          where: {
-            id: pessoa.id,
-          },
-        }
+        { escolheu: true, escolhido: true },
+        { where: { id: { [Op.in]: people.map((person) => person.id) } }, transaction }
       );
-
-      //update escolhido
-
-      await Pessoa.update(
-        { escolhido: 1 },
-        {
-          where: {
-            id: escolhido.id,
-          },
-        }
-      );
-
-      //insert par
-      await Par.create({
-        id_retira: pessoa.id,
-        id_escolhido: escolhido.id,
-      });
-    }
+    });
     res.status(200).json({ mensagem: "Sorteio Realizado com Sucesso!" });
   } catch (error) {
-    res
-      .status(400)
-      .json({ mensagem: "Ocorreu algum problema, refazer...", erro: error });
+    res.status(error instanceof DrawError ? error.status : 500).json({
+      mensagem: error instanceof DrawError ? error.message : "Não foi possível realizar o sorteio.",
+    });
   }
 });
 
 router.get("/u/:hash", async (req, res) => {
-  const { hash } = req.params;
+  try {
+    const pessoa = await Pessoa.findOne({ where: { hash: req.params.hash } });
+    if (!pessoa) return res.status(404).send("Link não encontrado.");
 
-  const pessoa = await Pessoa.findOne({
-    where: {
-      hash: hash,
-    },
-  });
+    const escolhido = await Par.findOne({ where: { id_retira: pessoa.id } });
+    if (!escolhido) return res.render("resultado", { pessoa, dados_escolhido: null });
 
-  const escolhido = await Par.findOne({
-    where: {
-      id_retira: pessoa.id,
-    },
-  });
-
-  const dados_escolhido = await Pessoa.findOne({
-    where: {
-      id: escolhido.id_escolhido,
-    },
-  });
-
-  res.render("resultado", { pessoa, escolhido, dados_escolhido });
+    const dados_escolhido = await Pessoa.findOne({ where: { id: escolhido.id_escolhido } });
+    if (!dados_escolhido) return res.status(404).send("Resultado não encontrado.");
+    return res.render("resultado", { pessoa, dados_escolhido });
+  } catch (_error) {
+    return res.status(500).send("Não foi possível consultar o resultado.");
+  }
 });
 
 module.exports = router;

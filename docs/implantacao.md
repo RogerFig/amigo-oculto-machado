@@ -85,7 +85,7 @@ mysql -u root "$RESTORE_DATABASE" < "$BACKUP_DIR/backup.sql"
 mysql -u root -e "SHOW TABLES FROM \`$RESTORE_DATABASE\`"
 ```
 
-`-p` solicita a senha local interativamente. Após conferir conteúdo e contagens no banco **temporário**, remova somente o schema criado neste teste e o dump temporário; nunca execute `DROP DATABASE` contra uma base existente/compartilhada. O backup de **produção** não foi criado nem restaurado: antes de esquema/tokens em produção, obter autorização explícita, backup verificável e plano de rollback próprios do ambiente Render.
+`-p` solicita a senha local interativamente. Após conferir conteúdo e contagens no banco **temporário**, remova somente o schema criado neste teste e o dump temporário; nunca execute `DROP DATABASE` contra uma base existente/compartilhada. O backup de **produção** para publicar os Marcos 2 e 3 foi criado e restaurado apenas em schema local temporário, como registrado em `docs/relatorio-marco-3.md`. Não restaurar sobre o JawsDB ativo sem autorização específica, coordenação das escritas e plano de recuperação; manter o dump em local protegido fora do repositório.
 
 ## Verificações atuais
 

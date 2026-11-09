@@ -34,11 +34,19 @@ botaoRestricoes.addEventListener("click", (e) => {
 const botaoSortear = document.querySelector("#btnSortear");
 
 botaoSortear.addEventListener("click", async (e) => {
-  const result = await getSorteio();
-  if (result.ok) {
-    window.location.href = "listagem.html";
-  } else {
-    alert("Aconteceu algum problema, verificar...");
+  botaoSortear.disabled = true;
+  try {
+    const result = await getSorteio();
+    if (result.ok) {
+      window.location.href = "listagem.html";
+    } else {
+      const body = await result.json().catch(() => ({}));
+      alert(body.mensagem || "Não foi possível realizar o sorteio.");
+    }
+  } catch (_error) {
+    alert("Não foi possível conectar à API para realizar o sorteio.");
+  } finally {
+    botaoSortear.disabled = false;
   }
 });
 

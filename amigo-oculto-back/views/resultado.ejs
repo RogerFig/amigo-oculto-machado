@@ -66,6 +66,7 @@
             <span style="font-weight: bold"><%= pessoa.nome_completo %></span>!!
             <p>Bem Vindo ao Amigo Oculto da Família Machado</p>
           </h3>
+          <% if (dados_escolhido) { %>
           <h5>Clique no botão abaixo para revelar seu amigo oculto!</h5>
           <p class="d-inline-flex gap-1">
             <!-- <div class="alert alert-success" role="alert">Lembre-se de guardar o resultado! Após sair da página você não terá mais acesso a ele!</div> -->
@@ -93,6 +94,9 @@
               </h3>
             </div>
           </div>
+          <% } else { %>
+          <div class="alert alert-info" role="status">O sorteio ainda não foi realizado. Volte mais tarde.</div>
+          <% } %>
         </div>
       </div>
     </div>

@@ -8,55 +8,78 @@ async function consultaLista() {
 }
 
 function preencheTabela(pessoas) {
-  tabelaLista.innerHTML = "";
+  tabelaLista.replaceChildren();
   pessoas.forEach((pessoa) => {
-    const pessoaHTML = `
-    <tr>
-    <th scope="row">${pessoa.id}</th>
-    <td>${pessoa.nome_completo}</td>
-    <td>${pessoa.nick}</td>
-    <td id="uLink_${pessoa.id}"><a href="${window.apiDomain}/u/${pessoa.hash}">${window.apiDomain}/u/${pessoa.hash}</a></td>
-    <td>
-    <button id="btnCopy_${pessoa.id}" class="copy-button botao-copiar">
-        <i class="fas fa-regular fa-copy" style="margin-right:4px" " ></i>
-    </button>
-    
-    </td>
-    </tr>
-    `;
-
-    tabelaLista.innerHTML += pessoaHTML;
+    const row = document.createElement("tr");
+    const heading = document.createElement("th");
+    heading.scope = "row";
+    heading.textContent = pessoa.id;
+    const name = document.createElement("td");
+    name.textContent = pessoa.nome_completo;
+    const nick = document.createElement("td");
+    nick.textContent = pessoa.nick;
+    const linkCell = document.createElement("td");
+    linkCell.id = `uLink_${pessoa.id}`;
+    const link = document.createElement("a");
+    link.href = `${window.apiDomain}/u/${encodeURIComponent(pessoa.hash)}`;
+    link.textContent = link.href;
+    linkCell.append(link);
+    const actions = document.createElement("td");
+    const copy = document.createElement("button");
+    copy.type = "button";
+    copy.id = `btnCopy_${pessoa.id}`;
+    copy.className = "copy-button botao-copiar";
+    copy.setAttribute("aria-label", `Copiar link de ${pessoa.nome_completo}`);
+    const icon = document.createElement("i");
+    icon.className = "fas fa-regular fa-copy";
+    icon.style.marginRight = "4px";
+    copy.append(icon);
+    actions.append(copy);
+    row.append(heading, name, nick, linkCell, actions);
+    tabelaLista.append(row);
   });
 }
 
 consultaLista();
 
 tabelaLista.addEventListener("click", async (e) => {
-  const elemento = e.target;
-  const targetTable = elemento.getAttribute("class");
+  const button = e.target.closest(".botao-copiar");
+  if (!button || !tabelaLista.contains(button)) return;
 
-  if (targetTable !== null && targetTable.includes("botao-copiar")) {
-    const id = Number(elemento.id.split("_")[1]);
+  const link = button.closest("tr").querySelector("a[href]");
+  if (!link) return;
 
-    const link_copiar = document.querySelector(`#uLink_${id}`);
-    let copiedSuccessfully = true;
+  let copied = false;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
     try {
-      const text = link_copiar.innerText || "";
-      await navigator.clipboard.writeText(text);
-    } catch (err) {
-      console.error(
-        "Error when trying to use navigator.clipboard.writeText()",
-        err
-      );
-      copiedSuccessfully = false;
-    }
-
-    if (copiedSuccessfully) {
-      var toastElList = [].slice.call(document.querySelectorAll(".toast"));
-      var toastList = toastElList.map(function (toastEl) {
-        return new bootstrap.Toast(toastEl);
-      });
-      toastList.forEach((toast) => toast.show());
+      await navigator.clipboard.writeText(link.href);
+      copied = true;
+    } catch (error) {
+      console.warn("Clipboard API indisponível; tentando cópia alternativa.", error);
     }
   }
+  if (!copied) {
+    try {
+      const input = document.createElement("textarea");
+      input.value = link.href;
+      input.style.position = "fixed";
+      input.style.opacity = "0";
+      document.body.append(input);
+      try {
+        input.select();
+        copied = document.execCommand("copy");
+      } finally {
+        input.remove();
+      }
+    } catch (error) {
+      console.error("Falha ao copiar o link.", error);
+    }
+  }
+
+  const toastElement = document.querySelector("#liveToast");
+  toastElement.className = copied ? "toast text-bg-success" : "toast text-bg-danger";
+  toastElement.querySelector(".toast-body").textContent = copied
+    ? "Link copiado com sucesso!"
+    : "Não foi possível copiar. Selecione e copie o link acima.";
+  new bootstrap.Toast(toastElement).show();
 });

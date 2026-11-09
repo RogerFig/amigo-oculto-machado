@@ -19,40 +19,43 @@ async function consultaPessoas() {
 }
 
 function preencheTabela(pessoas, restricoes) {
-  tabelaLista.innerHTML = "";
+  tabelaLista.replaceChildren();
   pessoas.forEach((pessoa) => {
-    totalRestricoesPessoa = restricoes.filter(
+    const totalRestricoesPessoa = restricoes.filter(
       (elemento) => elemento.id_retira === pessoa.id
     ).length;
-    const pessoaHTML = `
-    <tr>
-    <th scope="row">${pessoa.id}</th>
-    <td class="w-25">${pessoa.nome_completo}</td>
-    <td class="w-75">
-      <div class="dropdown">
-        <button
-        type="button"
-          class="btn btn-outline-success form-control dropdown-toggle"
-          data-bs-toggle="dropdown"
-          value="Restrições"
-          aria-expanded="false"
-          data-bs-auto-close="outside"
-          readonly
-        >
-        Restrições <span class="badge text-bg-warning">${totalRestricoesPessoa}</span>
-        </button>
-        
-        <div class="dropdown-menu p-0 w-100">
-          <div class="list-group">
-            ${preencheSelect(pessoas, restricoes, pessoa.id)}
-          </div>
-        </div>
-      </div>
-    </td>
-  </tr>
-      `;
-
-    tabelaLista.innerHTML += pessoaHTML;
+    const row = document.createElement("tr");
+    const heading = document.createElement("th");
+    heading.scope = "row";
+    heading.textContent = pessoa.id;
+    const name = document.createElement("td");
+    name.className = "w-25";
+    name.textContent = pessoa.nome_completo;
+    const cell = document.createElement("td");
+    cell.className = "w-75";
+    const dropdown = document.createElement("div");
+    dropdown.className = "dropdown";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn btn-outline-success form-control dropdown-toggle";
+    button.setAttribute("data-bs-toggle", "dropdown");
+    button.setAttribute("aria-expanded", "false");
+    button.setAttribute("data-bs-auto-close", "outside");
+    button.textContent = "Restrições ";
+    const badge = document.createElement("span");
+    badge.className = "badge text-bg-warning";
+    badge.textContent = totalRestricoesPessoa;
+    button.append(badge);
+    const menu = document.createElement("div");
+    menu.className = "dropdown-menu p-0 w-100";
+    const list = document.createElement("div");
+    list.className = "list-group";
+    preencheSelect(list, pessoas, restricoes, pessoa.id);
+    menu.append(list);
+    dropdown.append(button, menu);
+    cell.append(dropdown);
+    row.append(heading, name, cell);
+    tabelaLista.append(row);
   });
 }
 
@@ -64,23 +67,18 @@ function selectBox(par1, par2, restricoes) {
     : "";
 }
 
-function preencheSelect(pessoas, restricoes, idPessoa) {
-  let select = "";
+function preencheSelect(list, pessoas, restricoes, idPessoa) {
   pessoas.forEach((pessoa) => {
-    const dropdownHTML = `
-    <label class="list-group-item">
-        <input
-        class="form-check-input me-1"
-        type="checkbox"
-        value="${idPessoa}_${pessoa.id}"
-        ${selectBox(idPessoa, pessoa.id, restricoes)}
-        />
-        ${pessoa.nick}
-    </label>
-        `;
-    select += dropdownHTML;
+    const label = document.createElement("label");
+    label.className = "list-group-item";
+    const input = document.createElement("input");
+    input.className = "form-check-input me-1";
+    input.type = "checkbox";
+    input.value = `${idPessoa}_${pessoa.id}`;
+    input.checked = selectBox(idPessoa, pessoa.id, restricoes) === "checked";
+    label.append(input, document.createTextNode(` ${pessoa.nick}`));
+    list.append(label);
   });
-  return select;
 }
 
 function addEventOnDropdowns() {

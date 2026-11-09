@@ -1,6 +1,6 @@
 # Relatório — Marco 1
 
-- **Status:** concluído e validado localmente; publicação/homologação em navegador não realizadas.
+- **Status:** concluído e publicado; o responsável confirmou login e sessão no navegador em 2026-11-09. Os parágrafos abaixo registram o estado histórico de cada etapa antes da publicação.
 - **Achados abordados:** rotas administrativas sem autenticação e CORS aberto. Foram adicionados login de administrador, cookie de sessão assinado, CSRF e CORS por origem exata. `GET /u/:hash` continua público por token individual. O legado `GET /sorteia` também exige CSRF enquanto ainda usa GET.
 - **Arquivos alterados (Marco 1, inclusive refinamentos):** backend `app.js`, `auth/admin-auth.js`, `package.json`, `package-lock.json`, `.env.example`, `test/admin-auth.test.js`, `test/admin-http.test.js`, `test/admin-frontend.test.js`; frontend `login.html`, `js/auth-client.js`, `js/login.js`, `js/geral.js`, `js/delete-user.js`, `js/edit-user.js`, `js/get-simple-list.js`, `js/get-users.js`, `js/post-users.js`, `js/restricoes.js`, `js/util.js`, `index.html`, `listagem.html`, `restricoes.html`; `AGENTS.md`, `docs/diagnostico.md`, `docs/implantacao.md` e este relatório.
 - **Decisões técnicas:** sessão stateless assinada com HMAC e validade padrão de 8 horas; cookie `HttpOnly`, `SameSite=Lax` local e `SameSite=None; Secure` quando HTTPS/cross-site. Token CSRF aleatório associado à sessão e verificado junto à origem exata. Sem dependências ou tabelas novas; senha e chave são obrigatórias no ambiente do backend. Node 18.1+ é requerido pelo runner nativo. Ajustes de seleção de domínio e `response.ok` foram antecipados para evitar acesso local à API publicada e redirecionamento falso em falhas.
@@ -24,3 +24,7 @@
 
 - Após o deploy, o responsável confirmou que `/login.html` funciona, mas a raiz do frontend redirecionava a `/admin/`, que exigia autenticação e respondia JSON `401` em vez de mostrar o login.
 - O redirecionamento da raiz aponta agora para `/admin/login.html`; acessos diretos a `/admin` e `/admin/` também redirecionam para o login. O pacote estático é sincronizado com `npm run sync:admin` e o teste HTTP verifica ambos os caminhos. Nenhum dado, token ou senha foi alterado.
+
+### Fechamento — 2026-11-09
+
+- Publicado em `cffc0b5`; `/admin/` redirecionou a `/admin/login.html` com HTTP 200. O login e `/auth/session` retornaram 200 em produção com a senha presente no `.env` local, sem exibir credenciais ou consultar/modificar dados. O responsável confirmou login e persistência da sessão no navegador. Marco 1 encerrado com sua aprovação.
