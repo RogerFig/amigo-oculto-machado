@@ -1,7 +1,7 @@
 const tabelaLista = document.querySelector("#lista-pessoas tbody");
 
 async function consultaPessoas() {
-  const retorno = await fetch(`${domain}`);
+  const retorno = await window.apiFetch(`${domain}`);
   const pessoas = await retorno.json();
 
   preencheTabela(pessoas);

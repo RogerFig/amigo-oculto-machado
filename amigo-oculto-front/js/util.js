@@ -14,7 +14,7 @@ const botaoReset = document.querySelector("#btnReset");
 
 async function resetValues(e) {
   if (confirm("Confirmar a exclusão?")) {
-    const retorno = await fetch(`${domain}`, {
+    const retorno = await window.apiFetch(`${domain}`, {
       method: "PUT",
     });
   } else {
@@ -35,7 +35,7 @@ const botaoSortear = document.querySelector("#btnSortear");
 
 botaoSortear.addEventListener("click", async (e) => {
   const result = await getSorteio();
-  if ((result.status = 200)) {
+  if (result.ok) {
     window.location.href = "listagem.html";
   } else {
     alert("Aconteceu algum problema, verificar...");
@@ -43,7 +43,7 @@ botaoSortear.addEventListener("click", async (e) => {
 });
 
 async function getSorteio() {
-  const retorno = await fetch(`${domain}/sorteia`, {
+  const retorno = await window.apiFetch(`${domain}/sorteia`, {
     method: "GET",
   });
   return retorno;
