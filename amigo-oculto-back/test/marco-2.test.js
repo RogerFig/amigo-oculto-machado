@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 const { runInNewContext } = require("node:vm");
-const { Pessoa } = require("../models");
+const { Pessoa, Par, sequelize } = require("../models");
 const routes = require("../api");
 
 const scripts = join(__dirname, "../../amigo-oculto-front/js");
@@ -104,9 +104,15 @@ test("new participant links use random tokens without changing existing hashes",
   const post = routes.stack.find((layer) => layer.route?.path === "/" && layer.route.methods.post).route.stack[0].handle;
   const originalMax = Pessoa.max;
   const originalCreate = Pessoa.create;
+  const originalFindAll = Pessoa.findAll;
+  const originalCount = Par.count;
+  const originalTransaction = sequelize.transaction;
   const saved = [];
   Pessoa.max = async () => { throw Error("MAX(id) must not be used"); };
   Pessoa.create = async (data) => { saved.push(data); return data; };
+  Pessoa.findAll = async () => [];
+  Par.count = async () => 0;
+  sequelize.transaction = async (callback) => callback({ LOCK: { UPDATE: "UPDATE" } });
   try {
     for (let i = 0; i < 2; i++) {
       const req = { body: { nome_completo: "Mesmo nome", nick: "Teste", escolheu: false, escolhido: false } };
@@ -120,6 +126,9 @@ test("new participant links use random tokens without changing existing hashes",
   } finally {
     Pessoa.max = originalMax;
     Pessoa.create = originalCreate;
+    Pessoa.findAll = originalFindAll;
+    Par.count = originalCount;
+    sequelize.transaction = originalTransaction;
   }
 });
 

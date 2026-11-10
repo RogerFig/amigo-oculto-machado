@@ -2,27 +2,28 @@ var tabela = document.querySelector("#lista-pessoas tbody");
 
 tabela.addEventListener("click", async (e) => {
   const elemento = e.target;
-  targetTable = elemento.getAttribute("class");
+  const targetTable = elemento.getAttribute("class");
 
   if (targetTable !== null && targetTable.includes("botao-editar")) {
     const id = elemento.id.split("_")[1];
     const formUser = document.querySelector("#formUser");
 
-    const pessoa = await getPessoa(id);
-    console.log(pessoa[0].id);
-    formUser.idHidden.value = pessoa[0].id;
-    formUser.inNome.value = pessoa[0].nome_completo;
-    formUser.inNick.value = pessoa[0].nick;
-    formUser.checkEscolheu.checked = pessoa[0].escolheu;
-    formUser.checkEscolhido.checked = pessoa[0].escolhido;
-
-    const titulo = document.querySelector("#staticBackdropLabel");
-    titulo.innerText = "Editar Usuário";
+    try {
+      const pessoa = await getPessoa(id);
+      if (!pessoa.length) throw new Error("Participante não encontrado.");
+      formUser.idHidden.value = pessoa[0].id;
+      formUser.inNome.value = pessoa[0].nome_completo;
+      formUser.inNick.value = pessoa[0].nick;
+      document.querySelector("#staticBackdropLabel").textContent = "Editar Usuário";
+    } catch (error) {
+      document.querySelector("#mensagem").textContent = error.message;
+    }
   }
 });
 
 async function getPessoa(id) {
   const retorno = await window.apiFetch(`${domain}?id=${id}`);
+  if (!retorno.ok) throw new Error("Não foi possível consultar o participante.");
   const pessoa = await retorno.json();
   return pessoa;
 }
@@ -42,11 +43,14 @@ async function editarUser(user) {
       const myModalEl = document.querySelector("#staticBackdrop");
       const modal = bootstrap.Modal.getInstance(myModalEl);
       modal.hide();
-      consultaPessoas();
+      consultaPessoas().catch(() => alert("Pessoa editada, mas não foi possível atualizar a lista."));
+      return true;
     } else {
-      console.log("Erro ao editar pessoa.");
+      const body = await retorno.json().catch(() => ({}));
+      document.querySelector("#mensagem").textContent = body.mensagem || "Não foi possível editar a pessoa.";
     }
   } catch (erro) {
-    console.error(erro);
+    document.querySelector("#mensagem").textContent = "Falha de conexão ao editar a pessoa.";
   }
+  return false;
 }

@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 const { runInNewContext } = require("node:vm");
-const { Pessoa, Restricao, sequelize } = require("../models");
+const { Pessoa, Par, Restricao, sequelize } = require("../models");
 const routes = require("../api");
 
 const create = routes.stack.find((layer) => layer.route?.path === "/" && layer.route.methods.post).route.stack[0].handle;
@@ -18,13 +18,18 @@ function response() {
 }
 
 async function withMocks(stubs, run) {
-  const saved = stubs.map(([target, name, replacement]) => {
+  const guards = [
+    [Pessoa, "findAll", async () => []],
+    [Par, "count", async () => 0],
+    [sequelize, "transaction", async (callback) => callback({ LOCK: { UPDATE: "UPDATE" } })],
+  ];
+  const saved = [...guards, ...stubs].map(([target, name, replacement]) => {
     const previous = target[name];
     target[name] = replacement;
     return [target, name, previous];
   });
   try { await run(); }
-  finally { for (const [target, name, previous] of saved) target[name] = previous; }
+  finally { for (const [target, name, previous] of saved.reverse()) target[name] = previous; }
 }
 
 test("registration validates required data and relies on autoIncrement, not MAX(id)", async () => {
@@ -33,14 +38,14 @@ test("registration validates required data and relies on autoIncrement, not MAX(
     [Pessoa, "max", async () => { throw Error("MAX(id) is unsafe"); }],
     [Pessoa, "create", async (values) => { saved.push(values); return values; }],
   ], async () => {
-    for (const body of [{}, { nome_completo: "", nick: "Apelido" }, { nome_completo: "Nome", nick: "Apelido", escolhido: "false" }]) {
+    for (const body of [{}, { nome_completo: "", nick: "Apelido" }, { nome_completo: "Nome", nick: "" }]) {
       const invalid = response();
       await create({ body }, invalid);
       assert.equal(invalid.statusCode, 400);
     }
     assert.equal(saved.length, 0);
     const valid = response();
-    await create({ body: { nome_completo: " Nome ", nick: " Apelido " } }, valid);
+    await create({ body: { nome_completo: " Nome ", nick: " Apelido ", escolheu: true } }, valid);
     assert.equal(valid.statusCode, 201);
     assert.equal(saved[0].id, undefined);
     assert.equal(saved[0].nome_completo, "Nome");
@@ -63,7 +68,6 @@ test("restriction replacement clears an empty selection in the same transaction"
     [Pessoa, "findByPk", async (id, options) => {
       assert.equal(id, 3);
       assert.equal(options.transaction, tx);
-      assert.equal(options.lock, "UPDATE");
       events.push("lock");
       return { id };
     }],

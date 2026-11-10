@@ -35,7 +35,7 @@ npm ci
 npm run dev
 ```
 
-O `.env` local preparado já tem `NODE_ENV=development`, `FRONTEND_ORIGIN=http://localhost:8080`, `AUTH_COOKIE_SECURE=false`, segredos locais aleatórios e a senha do usuário do banco. Não use valores de produção. `npm run dev` executa a API em modo de desenvolvimento. `npm run prod` executa `node app.js`, mas não é um comando de migração. `npm test` roda os testes de autenticação.
+O `.env` local preparado já tem `NODE_ENV=development`, `FRONTEND_ORIGIN=http://localhost:8080`, `AUTH_COOKIE_SECURE=false`, segredos locais aleatórios e a senha do usuário do banco. Não use valores de produção. `npm run dev` executa a API em modo de desenvolvimento. `npm run prod` executa `node app.js`, mas não é um comando de migração. A API só escuta conexões depois de `sequelize.authenticate()` e `sequelize.sync()` concluírem; se o banco estiver indisponível, falha sem atender requisições. `npm test` roda os testes automatizados.
 
 ## Frontend local
 

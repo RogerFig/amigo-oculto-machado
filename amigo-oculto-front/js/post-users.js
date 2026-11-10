@@ -1,6 +1,6 @@
 const botaoSalvar = document.querySelector("#btnsalvar");
 
-botaoSalvar.addEventListener("click", (e) => {
+botaoSalvar.addEventListener("click", async () => {
   const formUser = document.querySelector("#formUser");
   if (!formUser.checkValidity()) {
     const msg = document.querySelector("#mensagem");
@@ -12,36 +12,20 @@ botaoSalvar.addEventListener("click", (e) => {
   const idHidden = formUser.idHidden.value;
   const inNome = formUser.inNome.value;
   const inNick = formUser.inNick.value;
-  const escolheu = formUser.checkEscolheu.checked;
-  const escolhido = formUser.checkEscolhido.checked;
-
-  if (idHidden) {
-    user = {
-      id: idHidden,
-      nome_completo: inNome,
-      nick: inNick,
-      escolheu: escolheu,
-      escolhido: escolhido,
-    };
-    editarUser(user);
-    const titulo = document.querySelector("#staticBackdropLabel");
-    titulo.innerText = "Adicionar Usuário";
-  } else {
-    user = {
-      nome_completo: inNome,
-      nick: inNick,
-      escolheu: escolheu,
-      escolhido: escolhido,
-    };
-    enviaPost(user);
+  botaoSalvar.disabled = true;
+  try {
+    const user = { nome_completo: inNome, nick: inNick };
+    const saved = idHidden ? await editarUser({ id: idHidden, ...user }) : await enviaPost(user);
+    if (saved) {
+      formUser.inNome.value = "";
+      formUser.inNick.value = "";
+      formUser.idHidden.value = "";
+      document.querySelector("#mensagem").textContent = "";
+      document.querySelector("#staticBackdropLabel").textContent = "Adicionar Usuário";
+    }
+  } finally {
+    botaoSalvar.disabled = false;
   }
-
-  formUser.inNome.value = "";
-  formUser.inNick.value = "";
-  formUser.idHidden.value = "";
-  formUser.checkEscolheu.checked = false;
-  formUser.checkEscolhido.checked = false;
-  document.querySelector("#mensagem").innerText = "";
 });
 
 async function enviaPost(user) {
@@ -59,11 +43,14 @@ async function enviaPost(user) {
       const myModalEl = document.querySelector("#staticBackdrop");
       const modal = bootstrap.Modal.getInstance(myModalEl);
       modal.hide();
-      consultaPessoas();
+      consultaPessoas().catch(() => alert("Pessoa cadastrada, mas não foi possível atualizar a lista."));
+      return true;
     } else {
-      console.log("Erro ao adicionar pessoa.");
+      const body = await retorno.json().catch(() => ({}));
+      document.querySelector("#mensagem").textContent = body.mensagem || "Não foi possível adicionar a pessoa.";
     }
   } catch (erro) {
-    console.error(erro);
+    document.querySelector("#mensagem").textContent = "Falha de conexão ao cadastrar a pessoa.";
   }
+  return false;
 }

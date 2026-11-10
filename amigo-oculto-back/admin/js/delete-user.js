@@ -2,7 +2,7 @@ var tabela = document.querySelector("#lista-pessoas tbody");
 
 tabela.addEventListener("click", (e) => {
   const elemento = e.target;
-  targetTable = elemento.getAttribute("class");
+  const targetTable = elemento.getAttribute("class");
 
   if (targetTable !== null && targetTable.includes("botao-excluir")) {
     const id = Number(elemento.id.split("_")[1]);
@@ -24,11 +24,12 @@ async function excluirUser(id) {
     });
 
     if (retorno.status === 204) {
-      consultaPessoas();
+      consultaPessoas().catch(() => alert("Pessoa removida, mas não foi possível atualizar a lista."));
     } else {
-      console.log("Erro ao remover pessoa.");
+      const body = await retorno.json().catch(() => ({}));
+      alert(body.mensagem || "Não foi possível remover a pessoa.");
     }
   } catch (erro) {
-    console.error(erro);
+    alert("Falha de conexão ao remover a pessoa.");
   }
 }

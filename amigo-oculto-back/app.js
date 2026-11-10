@@ -44,7 +44,7 @@ function createApp({ routes = rotas, settings = process.env } = {}) {
   app.use("/admin", express.static(path.join(__dirname, "admin"), { index: false }));
 
   app.set("view engine", "ejs");
-  app.set("views", "./views");
+  app.set("views", path.join(__dirname, "views"));
 
   const authRoutes = express.Router();
   authRoutes.post("/login", auth.login);
@@ -55,17 +55,33 @@ function createApp({ routes = rotas, settings = process.env } = {}) {
   app.use(auth.requireAdminExceptResult);
   app.use(auth.requireCsrfForMutation);
   app.use("/", routes);
+  app.use((error, _req, res, next) => {
+    if (res.headersSent) return next(error);
+    return res.status(error.status === 400 ? 400 : 500).json({
+      mensagem: error.status === 400 ? "JSON inválido." : "Não foi possível concluir a operação.",
+    });
+  });
 
   return app;
 }
 
-if (require.main === module) {
-  const app = createApp();
-  const PORT = process.env.PORT || 3000;
-  sequelize.sync().then(() => {
-    console.log("Conectado no DB com sucesso!");
+async function startServer({ app = createApp(), db = sequelize, port = process.env.PORT || 3000 } = {}) {
+  await db.authenticate();
+  await db.sync();
+  return new Promise((resolve, reject) => {
+    const server = app.listen(port, () => resolve(server));
+    server.once("error", reject);
   });
-  app.listen(PORT, () => console.log(`Aplicação rodando na porta ${PORT}`));
 }
 
-module.exports = { createApp };
+if (require.main === module) {
+  startServer().then((server) => {
+    console.log(`Aplicação rodando na porta ${server.address().port}`);
+  }).catch(async () => {
+    console.error("Não foi possível iniciar a API: banco de dados indisponível.");
+    try { await sequelize.close(); } catch (_error) { /* Startup already failed. */ }
+    process.exitCode = 1;
+  });
+}
+
+module.exports = { createApp, startServer };

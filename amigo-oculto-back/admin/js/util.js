@@ -6,21 +6,33 @@ botaoAdicionar.addEventListener("click", (e) => {
   formUser.inNome.value = "";
   formUser.inNick.value = "";
   formUser.idHidden.value = "";
-  formUser.checkEscolheu.checked = false;
-  formUser.checkEscolhido.checked = false;
 });
 
 const botaoReset = document.querySelector("#btnReset");
 
 async function resetValues(e) {
-  if (confirm("Confirmar a exclusão?")) {
+  if (prompt("Este reset apaga os resultados atuais, mas mantém participantes, links e restrições. Digite RESETAR SORTEIO para confirmar:") === "RESETAR SORTEIO") {
+    botaoReset.disabled = true;
+    try {
     const retorno = await window.apiFetch(`${domain}`, {
       method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ confirmacao: "RESETAR SORTEIO" }),
     });
+    if (retorno.ok) {
+      window.location.reload();
+    } else {
+      const body = await retorno.json().catch(() => ({}));
+      alert(body.mensagem || "Não foi possível resetar o sorteio.");
+    }
+    } catch (_error) {
+      alert("Falha de conexão ao resetar o sorteio.");
+    } finally {
+      botaoReset.disabled = false;
+    }
   } else {
     return;
   }
-  console.log("Resetando essa bagaça");
 }
 
 botaoReset.addEventListener("click", resetValues);
