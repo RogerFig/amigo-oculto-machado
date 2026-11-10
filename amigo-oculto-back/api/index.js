@@ -175,7 +175,7 @@ router.post("/restricao", safeRoute(async (req, res) => {
     return res.status(200).json({ mensagem: "Restrições atualizadas." });
 }));
 
-router.get("/sorteia", async (req, res) => {
+async function drawEvent(req, res) {
   try {
     await sequelize.transaction(async (transaction) => {
       // Lock the participant rows before checking existing results or writing any pairs.
@@ -213,7 +213,10 @@ router.get("/sorteia", async (req, res) => {
       mensagem: error instanceof DrawError ? error.message : "Não foi possível realizar o sorteio.",
     });
   }
-});
+}
+
+// POST is the browser-facing mutation. Keep GET for older clients with Origin + CSRF.
+router.route("/sorteia").post(drawEvent).get(drawEvent);
 
 router.get("/u/:hash", async (req, res) => {
   try {

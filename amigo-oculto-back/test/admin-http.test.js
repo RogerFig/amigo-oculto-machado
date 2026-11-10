@@ -13,6 +13,7 @@ async function withServer(run, overrides = {}) {
   routes.get("/", (_req, res) => res.json([{ id: 1, hash: "private-test-hash" }]));
   routes.get("/restricao", (_req, res) => res.json([]));
   routes.get("/sorteia", (_req, res) => { writes++; res.json({ ok: true }); });
+  routes.post("/sorteia", (_req, res) => { writes++; res.json({ ok: true }); });
   routes.post("/restricao", (_req, res) => { writes++; res.sendStatus(201); });
   routes.post("/", (_req, res) => { writes++; res.sendStatus(201); });
   routes.put("/", (_req, res) => { writes++; res.sendStatus(200); });
@@ -56,7 +57,7 @@ test("HTTP: anonymous admin endpoints deny access before any route is executed; 
     assert.match(await adminPage.text(), /btnSortear/);
     for (const [method, path] of [
       ["GET", "/"], ["GET", "/?id=1"], ["GET", "/restricao"],
-      ["GET", "/sorteia"], ["POST", "/"], ["PUT", "/"],
+      ["GET", "/sorteia"], ["POST", "/sorteia"], ["POST", "/"], ["PUT", "/"],
       ["PUT", "/1"], ["DELETE", "/1"], ["POST", "/restricao"],
       ["GET", "/auth/session"], ["POST", "/auth/logout"],
     ]) {
@@ -118,12 +119,23 @@ test("HTTP: login, session, CSRF, allowed and foreign origins, logout", async ()
       const drawDenied = await fetch(url + path, { headers: { Cookie: cookie, Origin: ORIGIN } });
       assert.equal(drawDenied.status, 403, path);
     }
+    const missingOrigin = await fetch(url + "/sorteia", {
+      headers: { Cookie: cookie, "X-CSRF-Token": csrfToken },
+    });
+    assert.equal(missingOrigin.status, 403);
+    const missingCsrf = await fetch(url + "/sorteia", {
+      method: "POST", headers: { Cookie: cookie, Origin: ORIGIN },
+    });
+    assert.equal(missingCsrf.status, 403);
     assert.equal(writes(), 0);
 
     const allowedHeaders = { Cookie: cookie, Origin: ORIGIN, "X-CSRF-Token": csrfToken };
     const saved = await fetch(url + "/", { method: "POST", headers: allowedHeaders });
     assert.equal(saved.status, 201);
     assert.equal(writes(), 1);
+    const drawAllowed = await fetch(url + "/sorteia", { method: "POST", headers: allowedHeaders });
+    assert.equal(drawAllowed.status, 200);
+    assert.equal(writes(), 2);
 
     const preflight = await fetch(url + "/", {
       method: "OPTIONS", headers: { Origin: ORIGIN, "Access-Control-Request-Method": "POST", "Access-Control-Request-Headers": "x-csrf-token" },

@@ -171,9 +171,10 @@ test("public results handle unknown links, pending drawings and completed drawin
 test("admin draw button shows a useful error and does not navigate after an impossible draw", async () => {
   const buttons = new Map();
   const messages = [];
-  const window = { location: { href: "index.html" }, apiFetch: async () => ({
+  const calls = [];
+  const window = { location: { href: "index.html" }, apiFetch: async (url, options) => { calls.push({ url, options }); return ({
     ok: false, json: async () => ({ mensagem: "Não há sorteio possível com as restrições atuais." }),
-  }) };
+  }); } };
   const document = { querySelector(selector) {
     if (!buttons.has(selector)) buttons.set(selector, { addEventListener(_event, callback) { this.click = callback; } });
     return buttons.get(selector);
@@ -183,7 +184,14 @@ test("admin draw button shows a useful error and does not navigate after an impo
   });
   const button = buttons.get("#btnSortear");
   await button.click({});
+  assert.equal(calls[0].options.method, "POST");
   assert.deepEqual(messages, ["Não há sorteio possível com as restrições atuais."]);
   assert.equal(window.location.href, "index.html");
   assert.equal(button.disabled, false);
+});
+
+test("draw endpoint accepts POST for browser requests and retains protected legacy GET", () => {
+  const drawRoute = router.stack.find((layer) => layer.route?.path === "/sorteia").route;
+  assert.equal(drawRoute.methods.post, true);
+  assert.equal(drawRoute.methods.get, true);
 });

@@ -53,7 +53,7 @@ botaoSortear.addEventListener("click", async (e) => {
       window.location.href = "listagem.html";
     } else {
       const body = await result.json().catch(() => ({}));
-      alert(body.mensagem || "Não foi possível realizar o sorteio.");
+      alert(body.mensagem || body.erro || "Não foi possível realizar o sorteio.");
     }
   } catch (_error) {
     alert("Não foi possível conectar à API para realizar o sorteio.");
@@ -64,7 +64,7 @@ botaoSortear.addEventListener("click", async (e) => {
 
 async function getSorteio() {
   const retorno = await window.apiFetch(`${domain}/sorteia`, {
-    method: "GET",
+    method: "POST",
   });
   return retorno;
 }
