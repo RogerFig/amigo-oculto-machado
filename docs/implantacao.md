@@ -90,6 +90,7 @@ mysql -u root -e "SHOW TABLES FROM \`$RESTORE_DATABASE\`"
 ## Verificações atuais
 
 - `npm test` executa `node --test`, com testes unitários e HTTP isolados de autenticação em `amigo-oculto-back/test/`, incluindo o pacote estático de `/admin/`. Os testes HTTP não conectam ao banco nem executam sorteios.
+- `npm run test:concurrency` (no backend) é um teste de integração opcional que exige MySQL local e `.env` apontando **exatamente** para `amigo_oculto_dev` em `127.0.0.1`/`localhost`. Cria um schema temporário com participantes fictícios, envia dez pares de requisições simultâneas de sorteio e remove somente o schema criado. Recusa configuração que aponte para outro banco/host; nunca usar produção para testar concorrência.
 - Consulta somente leitura via `mysql2` confirmou conexão à base local, MySQL 8.4.13 e três tabelas vazias; a criação anterior das tabelas por `sequelize.sync()` consta da configuração local, mas **não foi repetida** nesta verificação.
 - Não há lint/typecheck, migrações versionadas nem rollback automatizado configurados.
 
