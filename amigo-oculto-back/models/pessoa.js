@@ -24,6 +24,8 @@ const Pessoa = (sequelize, DataTypes) => {
       },
       hash: {
         type: DataTypes.STRING,
+        allowNull: false,
+        unique: "pessoas_hash_unique",
       },
     },
     {

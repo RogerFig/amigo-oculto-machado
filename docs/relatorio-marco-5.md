@@ -1,6 +1,6 @@
 # Marco 5 — interface, testes e homologação
 
-**Estado:** Marco 5 publicado em `4ca592d` e interface aprovada pelo responsável após testes no celular (reset, restrições e cópia dos links). O sorteio posteriormente falhou por autorização da requisição; correção abaixo **ainda local e não publicada**. Não houve operação de escrita em produção pelo agente.
+**Estado:** Marco 5 publicado em `4ca592d`; a correção do envio do sorteio foi publicada em `0e2c9a2`. O responsável confirmou após o deploy que o fluxo funcionou, inclusive no celular, com reset, restrições, cópia dos links e sorteio. Não houve operação de escrita em produção pelo agente.
 
 ## Mudanças e evidências
 
@@ -24,8 +24,8 @@ Marcar somente depois de executar em **desktop e celular** (anotar navegador/ver
 
 **Matriz PRD T01–T16:** testes anteriores cobrem autenticação (T01), links/visibilidade (T02–T05), sorteio e restrições (T06–T12), startup (T13) e bloqueio após sorteio (T15); testes de interface simulados cobrem feedback de leitura em T14, mas o fluxo real de T14 ainda exige navegador. T16 (rotação de tokens) permanece fora deste marco até plano e autorização específicos. Não declarar o fluxo ponta a ponta aceito sem executar o checklist em homologação isolada.
 
-**Riscos restantes:** a interface e a cópia dos links passaram no celular segundo o responsável, mas o sorteio na versão publicada falhou por autorização. A correção exige teste isolado e deploy autorizado antes de nova tentativa em produção. Rotação de links requer aprovação própria.
+**Riscos restantes:** hashes legados foram substituídos depois, com backup atual, ensaio isolado, índice único e validação em produção (ver `docs/plano-rotacao-links.md`). A validação manual no desktop e cenários destrutivos em base isolada não foram reportados como integralmente concluídos; não extrapolar o aceite móvel para esses cenários.
 
 ## Correção posterior à homologação móvel — envio do sorteio
 
-Depois do teste no celular, a requisição de sorteio retornou `{ "erro": "Requisição não autorizada." }` (`403` na checagem Origin/CSRF); o cliente mostrava a mensagem genérica porque só lia `mensagem`. Causa: o botão usava `GET /sorteia`, e navegadores podem omitir `Origin` de GET na mesma origem. O formulário agora envia `POST /sorteia` (requisição de escrita com Origin e CSRF), o backend aceita POST com as mesmas proteções e mantém GET legado somente sob Origin + CSRF. A interface também exibe `erro` da API. **Validação local:** `npm test` 42/42; em schema MySQL temporário, GET sem Origin retornou `403` sem pares, enquanto POST com Origin e CSRF retornou `200` com três pares fictícios. Schema removido; **nenhum sorteio em produção repetido pelo agente**. O responsável autorizou commit e push desta correção para `main`; confirmar o deploy por leitura, sem sortear em produção.
+Depois do teste no celular, a requisição de sorteio retornou `{ "erro": "Requisição não autorizada." }` (`403` na checagem Origin/CSRF); o cliente mostrava a mensagem genérica porque só lia `mensagem`. Causa: o botão usava `GET /sorteia`, e navegadores podem omitir `Origin` de GET na mesma origem. O formulário passou a enviar `POST /sorteia` (Origin e CSRF); o backend aceita POST com as mesmas proteções e mantém GET legado somente sob Origin + CSRF. A interface também exibe `erro` da API. **Validação:** no commit `0e2c9a2`, `npm test` 42/42; em schema MySQL temporário, GET sem Origin retornou `403` sem pares e POST com Origin e CSRF retornou `200` com três pares fictícios. Schema removido. Ambos os serviços serviram o novo script; o responsável testou o sorteio publicado e confirmou sucesso.
