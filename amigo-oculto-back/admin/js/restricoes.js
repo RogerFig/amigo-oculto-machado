@@ -1,21 +1,30 @@
 const tabelaLista = document.querySelector("#lista tbody");
+const statusLista = document.querySelector("#listStatus");
 let dropdownArray = [];
 
 async function consultaRestricoes() {
   const retorno = await window.apiFetch(`${domain}/restricao`);
+  if (!retorno.ok) throw new Error("Falha ao carregar restrições.");
   const restricoes = await retorno.json();
 
   return restricoes;
 }
 
 async function consultaPessoas() {
-  const retorno = await window.apiFetch(`${domain}`);
-  const pessoas = await retorno.json();
-
-  const restricoes = await consultaRestricoes();
-
-  preencheTabela(pessoas, restricoes);
-  addEventOnDropdowns();
+  statusLista.textContent = "Carregando restrições...";
+  try {
+    const retorno = await window.apiFetch(`${domain}`);
+    if (!retorno.ok) throw new Error("Falha ao carregar participantes.");
+    const pessoas = await retorno.json();
+    const restricoes = await consultaRestricoes();
+    preencheTabela(pessoas, restricoes);
+    addEventOnDropdowns();
+    statusLista.textContent = pessoas.length ? "" : "Nenhum participante cadastrado.";
+  } catch (error) {
+    tabelaLista.replaceChildren();
+    statusLista.textContent = "Não foi possível carregar as restrições. Verifique a conexão e recarregue a página.";
+    throw error;
+  }
 }
 
 function preencheTabela(pessoas, restricoes) {
@@ -124,4 +133,4 @@ async function saveChecked(restricoes) {
   }
 }
 
-consultaPessoas();
+consultaPessoas().catch(() => {});

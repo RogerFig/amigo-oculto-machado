@@ -1,10 +1,19 @@
 const tabelaLista = document.querySelector("#lista-pessoas tbody");
+const statusLista = document.querySelector("#listStatus");
 
 async function consultaPessoas() {
-  const retorno = await window.apiFetch(`${domain}`);
-  const pessoas = await retorno.json();
-
-  preencheTabela(pessoas);
+  statusLista.textContent = "Carregando participantes...";
+  try {
+    const retorno = await window.apiFetch(`${domain}`);
+    if (!retorno.ok) throw new Error("Falha ao carregar participantes.");
+    const pessoas = await retorno.json();
+    preencheTabela(pessoas);
+    statusLista.textContent = pessoas.length ? "" : "Nenhum participante cadastrado.";
+  } catch (error) {
+    tabelaLista.replaceChildren();
+    statusLista.textContent = "Não foi possível carregar participantes. Verifique a conexão e recarregue a página.";
+    throw error;
+  }
 }
 
 function preencheTabela(pessoas) {
@@ -37,4 +46,4 @@ function preencheTabela(pessoas) {
   });
 }
 
-consultaPessoas();
+consultaPessoas().catch(() => {});

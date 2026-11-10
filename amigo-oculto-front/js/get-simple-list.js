@@ -1,10 +1,19 @@
 const tabelaLista = document.querySelector("#lista-pessoas tbody");
+const statusLista = document.querySelector("#listStatus");
 
 async function consultaLista() {
-  const retorno = await window.apiFetch(`${window.apiDomain}`);
-  const pessoas = await retorno.json();
-
-  preencheTabela(pessoas);
+  statusLista.textContent = "Carregando links...";
+  try {
+    const retorno = await window.apiFetch(`${window.apiDomain}`);
+    if (!retorno.ok) throw new Error("Falha ao carregar links.");
+    const pessoas = await retorno.json();
+    preencheTabela(pessoas);
+    statusLista.textContent = pessoas.length ? "" : "Nenhum link disponível.";
+  } catch (error) {
+    tabelaLista.replaceChildren();
+    statusLista.textContent = "Não foi possível carregar os links. Verifique a conexão e recarregue a página.";
+    throw error;
+  }
 }
 
 function preencheTabela(pessoas) {
@@ -40,7 +49,7 @@ function preencheTabela(pessoas) {
   });
 }
 
-consultaLista();
+consultaLista().catch(() => {});
 
 tabelaLista.addEventListener("click", async (e) => {
   const button = e.target.closest(".botao-copiar");

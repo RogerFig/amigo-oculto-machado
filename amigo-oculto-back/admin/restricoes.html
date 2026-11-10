@@ -40,6 +40,7 @@
     <div class="container text-center">
       <div class="row">
         <div class="col">
+          <p id="listStatus" role="status" aria-live="polite">Carregando restrições...</p>
           <div class="table-responsive">
             <table
               id="lista"
@@ -52,37 +53,7 @@
                   <th scope="col">Restrições</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <th scope="row">4</th>
-                  <td class="w-25">Jerry</td>
-                  <td class="w-75">
-                    <div class="dropdown">
-                      <input
-                        type="text"
-                        class="form-control dropdown-toggle"
-                        data-bs-toggle="dropdown"
-                        value="All Sheets"
-                        aria-expanded="false"
-                        data-bs-auto-close="outside"
-                        readonly
-                      />
-                      <div class="dropdown-menu p-0 w-100">
-                        <div class="list-group">
-                          <label class="list-group-item">
-                            <input
-                              class="form-check-input me-1"
-                              type="checkbox"
-                              value=""
-                            />
-                            Sheet1
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
+              <tbody></tbody>
             </table>
           </div>
         </div>
